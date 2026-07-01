@@ -63,11 +63,9 @@ function submitSearch() {
 
 <style scoped>
 .panel {
-  background: rgba(255, 255, 255, 0.78);
-  border: 1px solid rgba(16, 35, 63, 0.08);
-  box-shadow: 0 18px 50px rgba(16, 35, 63, 0.08);
-  backdrop-filter: blur(14px);
-  border-radius: 24px;
+  background: #ffffff;
+  border: 1px solid #cfd8cf;
+  border-radius: 18px;
   padding: 22px;
 }
 
@@ -86,7 +84,7 @@ function submitSearch() {
   font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.16em;
-  color: #5f7392;
+  color: #6f8174;
 }
 
 h2,
@@ -95,7 +93,7 @@ p {
 }
 
 .description {
-  color: #57708f;
+  color: #567061;
   line-height: 1.6;
 }
 
@@ -108,23 +106,24 @@ p {
 .search-form input {
   flex: 1;
   min-width: 0;
-  border: 1px solid rgba(16, 35, 63, 0.12);
-  border-radius: 14px;
+  border: 1px solid #cfd8cf;
+  border-radius: 12px;
   padding: 12px 14px;
-  background: white;
+  background: #ffffff;
+  color: #17311f;
 }
 
 .search-form button {
-  border: 0;
-  border-radius: 14px;
+  border: 1px solid #7ab48a;
+  border-radius: 12px;
   padding: 10px 14px;
   cursor: pointer;
-  background: linear-gradient(135deg, #1d4ed8, #38bdf8);
+  background: #2f7d4b;
   color: white;
 }
 
 .error-message {
-  color: #b91c1c;
+  color: #a63a3a;
   font-size: 0.95rem;
 }
 
@@ -138,8 +137,9 @@ p {
 .tips span {
   padding: 8px 12px;
   border-radius: 999px;
-  background: rgba(16, 35, 63, 0.05);
-  color: #4f6786;
+  background: #edf5ef;
+  border: 1px solid #d6e1d8;
+  color: #4f6754;
   font-size: 0.92rem;
 }
 

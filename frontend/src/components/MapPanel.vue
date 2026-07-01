@@ -25,11 +25,9 @@ defineProps({
 
 <style scoped>
 .panel {
-  background: rgba(255, 255, 255, 0.78);
-  border: 1px solid rgba(16, 35, 63, 0.08);
-  box-shadow: 0 18px 50px rgba(16, 35, 63, 0.08);
-  backdrop-filter: blur(14px);
-  border-radius: 24px;
+  background: #ffffff;
+  border: 1px solid #cfd8cf;
+  border-radius: 18px;
   padding: 22px;
 }
 
@@ -48,7 +46,7 @@ defineProps({
   font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.16em;
-  color: #5f7392;
+  color: #6f8174;
 }
 
 h2,
@@ -58,14 +56,9 @@ p {
 
 .map {
   min-height: 240px;
-  border-radius: 20px;
-  background:
-    linear-gradient(135deg, rgba(29, 78, 216, 0.14), rgba(56, 189, 248, 0.08)),
-    radial-gradient(circle at 22% 28%, rgba(29, 78, 216, 0.26), transparent 18%),
-    radial-gradient(circle at 68% 40%, rgba(56, 189, 248, 0.3), transparent 14%),
-    radial-gradient(circle at 52% 72%, rgba(29, 78, 216, 0.2), transparent 16%),
-    #dbeafe;
-  border: 1px solid rgba(29, 78, 216, 0.15);
+  border-radius: 14px;
+  background: #f3f7f3;
+  border: 1px solid #cfd8cf;
   position: relative;
   overflow: hidden;
 }
@@ -74,9 +67,10 @@ p {
   position: absolute;
   inset: auto 16px 16px 16px;
   padding: 14px;
-  border-radius: 16px;
-  background: rgba(255, 255, 255, 0.82);
-  color: #21416f;
+  border-radius: 12px;
+  background: #ffffff;
+  border: 1px solid #cfd8cf;
+  color: #23402e;
   display: grid;
   gap: 4px;
 }

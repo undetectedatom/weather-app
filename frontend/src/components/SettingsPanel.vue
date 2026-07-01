@@ -78,7 +78,7 @@ function saveSettings() {
 .overlay-shell {
   position: fixed;
   inset: 0;
-  background: rgba(8, 15, 28, 0.32);
+  background: rgba(23, 49, 31, 0.24);
   display: flex;
   justify-content: flex-end;
   z-index: 50;
@@ -86,9 +86,8 @@ function saveSettings() {
 
 .panel {
   width: min(360px, 100%);
-  background: rgba(255, 255, 255, 0.96);
-  border-left: 1px solid rgba(16, 35, 63, 0.08);
-  box-shadow: -18px 0 50px rgba(16, 35, 63, 0.14);
+  background: #ffffff;
+  border-left: 1px solid #cfd8cf;
   padding: 22px;
 }
 
@@ -105,7 +104,7 @@ function saveSettings() {
   font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.16em;
-  color: #5f7392;
+  color: #6f8174;
 }
 
 h2,
@@ -121,32 +120,33 @@ p {
 .settings-form label {
   display: grid;
   gap: 6px;
-  color: #4f6786;
+  color: #4f6754;
 }
 
 .settings-form select {
-  border: 1px solid rgba(16, 35, 63, 0.12);
-  border-radius: 14px;
+  border: 1px solid #cfd8cf;
+  border-radius: 12px;
   padding: 12px 14px;
   background: white;
 }
 
 .settings-form button,
 .icon-button {
-  border: 0;
-  border-radius: 14px;
+  border: 1px solid #cfd8cf;
+  border-radius: 12px;
   padding: 10px 14px;
   cursor: pointer;
 }
 
 .settings-form button {
-  background: linear-gradient(135deg, #1d4ed8, #38bdf8);
+  background: #2f7d4b;
   color: white;
+  border-color: #7ab48a;
 }
 
 .icon-button {
-  background: #eef4ff;
-  color: #21416f;
+  background: #ffffff;
+  color: #23402e;
 }
 
 @media (max-width: 640px) {

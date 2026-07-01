@@ -1,11 +1,16 @@
 <script setup>
-import { computed, reactive, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
 import WeatherHeader from './components/WeatherHeader.vue'
 import SearchPanel from './components/SearchPanel.vue'
 import MapPanel from './components/MapPanel.vue'
 import WeatherSection from './components/WeatherSection.vue'
 import SettingsPanel from './components/SettingsPanel.vue'
 import AuthPanel from './components/AuthPanel.vue'
+
+const STORAGE_KEYS = {
+  language: 'weather-app.language',
+  temperatureUnit: 'weather-app.temperature-unit',
+}
 
 const activeView = ref('now')
 const selectedLocation = ref('San Francisco')
@@ -57,6 +62,42 @@ function formatTemperature(value, unit) {
   return `${value}°C`
 }
 
+function readStorage(key, fallback) {
+  try {
+    return window.localStorage.getItem(key) ?? fallback
+  } catch {
+    return fallback
+  }
+}
+
+function writeStorage(key, value) {
+  try {
+    window.localStorage.setItem(key, value)
+  } catch {
+    // Ignore storage errors in private/incognito contexts.
+  }
+}
+
+function loadSettings() {
+  language.value = readStorage(STORAGE_KEYS.language, language.value)
+  temperatureUnit.value = readStorage(STORAGE_KEYS.temperatureUnit, temperatureUnit.value)
+}
+
+function handleGlobalKeydown(event) {
+  if (event.key !== 'Escape') {
+    return
+  }
+
+  if (showAuthPanel.value) {
+    closeAuth()
+    return
+  }
+
+  if (showSettings.value) {
+    closeSettings()
+  }
+}
+
 function handleSearch(query) {
   searchQuery.value = query.trim()
 
@@ -93,6 +134,8 @@ function closeSettings() {
 function saveSettings(payload) {
   temperatureUnit.value = payload.temperatureUnit
   language.value = payload.language
+  writeStorage(STORAGE_KEYS.language, language.value)
+  writeStorage(STORAGE_KEYS.temperatureUnit, temperatureUnit.value)
   showSettings.value = false
   statusText.value = `Settings updated: ${language.value}, ${temperatureUnit.value}`
 }
@@ -114,6 +157,15 @@ function submitAuth(payload) {
   statusText.value = `${payload.mode === 'signin' ? 'Signed in' : 'Registered'} in ${language.value}`
   showAuthPanel.value = false
 }
+
+onMounted(() => {
+  loadSettings()
+  window.addEventListener('keydown', handleGlobalKeydown)
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('keydown', handleGlobalKeydown)
+})
 </script>
 
 <template>
@@ -175,10 +227,8 @@ function submitAuth(payload) {
 :global(body) {
   margin: 0;
   font-family: Arial, Helvetica, sans-serif;
-  background:
-    radial-gradient(circle at top, rgba(101, 163, 255, 0.18), transparent 34%),
-    linear-gradient(180deg, #f4f8ff 0%, #eef3fa 100%);
-  color: #10233f;
+  background: #f5f8f4;
+  color: #17311f;
 }
 
 :global(button),

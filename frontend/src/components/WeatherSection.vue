@@ -153,11 +153,9 @@ function submitRange() {
 
 <style scoped>
 .panel {
-  background: rgba(255, 255, 255, 0.78);
-  border: 1px solid rgba(16, 35, 63, 0.08);
-  box-shadow: 0 18px 50px rgba(16, 35, 63, 0.08);
-  backdrop-filter: blur(14px);
-  border-radius: 24px;
+  background: #ffffff;
+  border: 1px solid #cfd8cf;
+  border-radius: 18px;
   padding: 22px;
 }
 
@@ -181,7 +179,7 @@ function submitRange() {
   font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.16em;
-  color: #5f7392;
+  color: #6f8174;
 }
 
 h2,
@@ -196,17 +194,18 @@ p {
 }
 
 .time-selection button {
-  border: 0;
-  border-radius: 14px;
+  border: 1px solid #cfd8cf;
+  border-radius: 12px;
   padding: 10px 14px;
   cursor: pointer;
-  background: #eef4ff;
-  color: #21416f;
+  background: #ffffff;
+  color: #23402e;
 }
 
 .time-selection .active {
-  background: #1d4ed8;
-  color: white;
+  background: #edf5ef;
+  border-color: #7ab48a;
+  color: #2f7d4b;
 }
 
 .summary-grid {
@@ -218,19 +217,19 @@ p {
 .info-card,
 .forecast-card,
 .custom-range-card {
-  border-radius: 18px;
-  border: 1px solid rgba(16, 35, 63, 0.08);
+  border-radius: 14px;
+  border: 1px solid #cfd8cf;
   background: white;
   padding: 16px;
 }
 
 .highlight-card {
-  background: linear-gradient(160deg, #eff6ff, #ffffff);
+  background: #f5faf6;
 }
 
 .info-header {
   font-size: 0.9rem;
-  color: #57708f;
+  color: #6f8174;
   margin-bottom: 10px;
 }
 
@@ -244,7 +243,7 @@ p {
 }
 
 .details-list p {
-  color: #21416f;
+  color: #23402e;
 }
 
 .custom-range-card {
@@ -262,23 +261,23 @@ p {
 .range-form label {
   display: grid;
   gap: 6px;
-  color: #4f6786;
+  color: #4f6754;
   font-size: 0.92rem;
 }
 
 .range-form input {
-  border: 1px solid rgba(16, 35, 63, 0.12);
-  border-radius: 14px;
+  border: 1px solid #cfd8cf;
+  border-radius: 12px;
   padding: 12px 14px;
   background: white;
 }
 
 .range-form button {
-  border: 0;
-  border-radius: 14px;
+  border: 1px solid #7ab48a;
+  border-radius: 12px;
   padding: 10px 14px;
   cursor: pointer;
-  background: linear-gradient(135deg, #1d4ed8, #38bdf8);
+  background: #2f7d4b;
   color: white;
 }
 
@@ -315,18 +314,18 @@ p {
 }
 
 .forecast-condition {
-  color: #57708f;
+  color: #6f8174;
 }
 
 .forecast-temp {
   font-size: 1.1rem;
   font-weight: 700;
-  color: #10233f;
+  color: #23402e;
 }
 
 .forecast-card p,
 .detail-label {
-  color: #57708f;
+  color: #567061;
 }
 
 .forecast-detail-grid {
@@ -335,7 +334,7 @@ p {
   gap: 12px;
   margin-top: 14px;
   padding-top: 14px;
-  border-top: 1px solid rgba(16, 35, 63, 0.08);
+  border-top: 1px solid #dbe4dc;
 }
 
 .detail-label {

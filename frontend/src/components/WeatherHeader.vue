@@ -42,10 +42,8 @@ defineEmits(['open-settings', 'open-auth'])
 
 <style scoped>
 .panel {
-  background: rgba(255, 255, 255, 0.78);
-  border: 1px solid rgba(16, 35, 63, 0.08);
-  box-shadow: 0 18px 50px rgba(16, 35, 63, 0.08);
-  backdrop-filter: blur(14px);
+  background: #ffffff;
+  border: 1px solid #cfd8cf;
 }
 
 .header {
@@ -53,7 +51,7 @@ defineEmits(['open-settings', 'open-auth'])
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  border-radius: 24px;
+  border-radius: 18px;
   padding: 18px 20px;
 }
 
@@ -64,13 +62,14 @@ defineEmits(['open-settings', 'open-auth'])
 }
 
 .brand-mark {
-  width: 48px;
-  height: 48px;
+  width: 44px;
+  height: 44px;
   display: grid;
   place-items: center;
-  border-radius: 16px;
-  background: linear-gradient(135deg, #1d4ed8, #38bdf8);
-  color: white;
+  border-radius: 12px;
+  background: #e8f3ea;
+  border: 1px solid #b9d0bc;
+  color: #2f7d4b;
   font-weight: 700;
   letter-spacing: 0.04em;
 }
@@ -80,7 +79,7 @@ defineEmits(['open-settings', 'open-auth'])
   font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.16em;
-  color: #5f7392;
+  color: #6f8174;
 }
 
 h1,
@@ -99,10 +98,11 @@ h1 {
 }
 
 .status-pill {
-  padding: 10px 14px;
+  padding: 8px 12px;
   border-radius: 999px;
-  background: rgba(29, 78, 216, 0.08);
-  color: #1d4ed8;
+  background: #edf5ef;
+  border: 1px solid #d6e1d8;
+  color: #2f7d4b;
   font-size: 0.95rem;
 }
 
@@ -115,19 +115,17 @@ h1 {
 
 .ghost-button,
 .primary-button {
-  border: 0;
-  border-radius: 14px;
+  border-radius: 12px;
   padding: 10px 14px;
   cursor: pointer;
-}
-
-.ghost-button {
-  background: #eef4ff;
-  color: #21416f;
+  border: 1px solid #cfd8cf;
+  background: #ffffff;
+  color: #23402e;
 }
 
 .primary-button {
-  background: linear-gradient(135deg, #1d4ed8, #38bdf8);
+  border-color: #7ab48a;
+  background: #2f7d4b;
   color: white;
 }
 

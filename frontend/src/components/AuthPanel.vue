@@ -1,6 +1,6 @@
 <template>
   <div class="overlay-shell" @click.self="$emit('close')">
-    <section class="auth-panel panel">
+    <section class="auth-panel panel" :class="mode">
       <div class="panel-header">
         <div>
           <p class="eyebrow">Account</p>
@@ -65,7 +65,7 @@ function submitAuth() {
 .overlay-shell {
   position: fixed;
   inset: 0;
-  background: rgba(8, 15, 28, 0.32);
+  background: rgba(23, 49, 31, 0.24);
   display: flex;
   justify-content: flex-end;
   z-index: 60;
@@ -73,10 +73,17 @@ function submitAuth() {
 
 .panel {
   width: min(360px, 100%);
-  background: rgba(255, 255, 255, 0.97);
-  border-right: 1px solid rgba(16, 35, 63, 0.08);
-  box-shadow: 18px 0 50px rgba(16, 35, 63, 0.14);
+  background: #ffffff;
+  border-right: 1px solid #cfd8cf;
   padding: 22px;
+}
+
+.panel.signin {
+  border-top: 2px solid #7ab48a;
+}
+
+.panel.register {
+  border-top: 2px solid #2f7d4b;
 }
 
 .panel-header {
@@ -92,7 +99,7 @@ function submitAuth() {
   font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.16em;
-  color: #5f7392;
+  color: #6f8174;
 }
 
 h2,
@@ -108,38 +115,39 @@ p {
 .auth-form label {
   display: grid;
   gap: 6px;
-  color: #4f6786;
+  color: #4f6754;
 }
 
 .auth-form input {
-  border: 1px solid rgba(16, 35, 63, 0.12);
-  border-radius: 14px;
+  border: 1px solid #cfd8cf;
+  border-radius: 12px;
   padding: 12px 14px;
   background: white;
 }
 
 .auth-form button,
 .icon-button {
-  border: 0;
-  border-radius: 14px;
+  border: 1px solid #cfd8cf;
+  border-radius: 12px;
   padding: 10px 14px;
   cursor: pointer;
 }
 
 .auth-form button {
-  background: linear-gradient(135deg, #1d4ed8, #38bdf8);
+  background: #2f7d4b;
   color: white;
+  border-color: #7ab48a;
 }
 
 .icon-button,
 .link-button {
-  background: #eef4ff;
-  color: #21416f;
+  background: #ffffff;
+  color: #23402e;
 }
 
 .switcher {
   margin-top: 18px;
-  color: #4f6786;
+  color: #4f6754;
 }
 
 .link-button {
