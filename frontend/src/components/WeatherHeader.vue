@@ -14,7 +14,9 @@
 
     <div class="header-right">
       <button class="ghost-button" type="button">{{ selectedLocation }}</button>
-      <button class="primary-button" type="button">Settings</button>
+      <button class="ghost-button" type="button">{{ temperatureUnit }}°</button>
+      <button class="primary-button" type="button" @click="$emit('open-settings')">Settings</button>
+      <button class="primary-button" type="button" @click="$emit('open-auth')">Sign In</button>
     </div>
   </header>
 </template>
@@ -29,7 +31,13 @@ defineProps({
     type: String,
     required: true,
   },
+  temperatureUnit: {
+    type: String,
+    required: true,
+  },
 })
+
+defineEmits(['open-settings', 'open-auth'])
 </script>
 
 <style scoped>
@@ -100,7 +108,9 @@ h1 {
 
 .header-right {
   display: flex;
+  flex-wrap: wrap;
   gap: 10px;
+  justify-content: flex-end;
 }
 
 .ghost-button,

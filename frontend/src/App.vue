@@ -1,74 +1,61 @@
 <script setup>
-import { reactive, ref } from 'vue'
+import { computed, reactive, ref } from 'vue'
 import WeatherHeader from './components/WeatherHeader.vue'
 import SearchPanel from './components/SearchPanel.vue'
 import MapPanel from './components/MapPanel.vue'
 import WeatherSection from './components/WeatherSection.vue'
+import SettingsPanel from './components/SettingsPanel.vue'
+import AuthPanel from './components/AuthPanel.vue'
 
 const activeView = ref('now')
 const selectedLocation = ref('San Francisco')
 const statusText = ref('Enter a location to see details')
 const searchQuery = ref('')
 const searchError = ref('')
+const showSettings = ref(false)
+const showAuthPanel = ref(false)
+const authMode = ref('signin')
+const temperatureUnit = ref('C')
+const language = ref('English')
 
 const currentWeather = reactive({
   location: 'San Francisco',
   region: 'California, United States',
-  temperature: '24°C',
+  temperatureC: 24,
   condition: 'Clear sky',
-  feelsLike: 'Feels like 23°C',
+  feelsLikeC: 23,
   humidity: 'Humidity 61%',
   wind: 'Wind 8 km/h',
   icon: '☀️',
 })
 
 const forecastDays = [
-  {
-    day: 'Mon',
-    date: 'Jun 2',
-    temp: '24°C',
-    condition: 'Sunny',
-    dayInfo: 'Warm and clear through most of the day.',
-    nightInfo: 'Cool and calm overnight with clear skies.',
-  },
-  {
-    day: 'Tue',
-    date: 'Jun 3',
-    temp: '22°C',
-    condition: 'Cloudy',
-    dayInfo: 'Overcast daytime with mild temperatures.',
-    nightInfo: 'Cloud cover remains through the night.',
-  },
-  {
-    day: 'Wed',
-    date: 'Jun 4',
-    temp: '19°C',
-    condition: 'Light Rain',
-    dayInfo: 'Light showers in the afternoon.',
-    nightInfo: 'Rain tapers off by late evening.',
-  },
-  {
-    day: 'Thu',
-    date: 'Jun 5',
-    temp: '21°C',
-    condition: 'Partly Cloudy',
-    dayInfo: 'Mixed sun and clouds during the day.',
-    nightInfo: 'Mild night with some cloud cover.',
-  },
-  {
-    day: 'Fri',
-    date: 'Jun 6',
-    temp: '25°C',
-    condition: 'Clear',
-    dayInfo: 'Bright and dry with good visibility.',
-    nightInfo: 'Clear skies and light winds overnight.',
-  },
+  { day: 'Mon', date: 'Jun 2', tempC: 24, condition: 'Sunny', dayInfo: 'Warm and clear through most of the day.', nightInfo: 'Cool and calm overnight with clear skies.' },
+  { day: 'Tue', date: 'Jun 3', tempC: 22, condition: 'Cloudy', dayInfo: 'Overcast daytime with mild temperatures.', nightInfo: 'Cloud cover remains through the night.' },
+  { day: 'Wed', date: 'Jun 4', tempC: 19, condition: 'Light Rain', dayInfo: 'Light showers in the afternoon.', nightInfo: 'Rain tapers off by late evening.' },
+  { day: 'Thu', date: 'Jun 5', tempC: 21, condition: 'Partly Cloudy', dayInfo: 'Mixed sun and clouds during the day.', nightInfo: 'Mild night with some cloud cover.' },
+  { day: 'Fri', date: 'Jun 6', tempC: 25, condition: 'Clear', dayInfo: 'Bright and dry with good visibility.', nightInfo: 'Clear skies and light winds overnight.' },
 ]
 
 const customRange = reactive({
   startDate: '',
   endDate: '',
 })
+
+const formattedCurrentTemp = computed(() => formatTemperature(currentWeather.temperatureC, temperatureUnit.value))
+const formattedFeelsLike = computed(() => `Feels like ${formatTemperature(currentWeather.feelsLikeC, temperatureUnit.value)}`)
+const formattedForecastDays = computed(() => forecastDays.map((item) => ({
+  ...item,
+  temp: formatTemperature(item.tempC, temperatureUnit.value),
+})))
+
+function formatTemperature(value, unit) {
+  if (unit === 'F') {
+    return `${Math.round((value * 9) / 5 + 32)}°F`
+  }
+
+  return `${value}°C`
+}
 
 function handleSearch(query) {
   searchQuery.value = query.trim()
@@ -94,6 +81,39 @@ function handleRangeSubmit(payload) {
   customRange.endDate = payload.endDate
   statusText.value = `Custom range selected for ${selectedLocation.value}`
 }
+
+function openSettings() {
+  showSettings.value = true
+}
+
+function closeSettings() {
+  showSettings.value = false
+}
+
+function saveSettings(payload) {
+  temperatureUnit.value = payload.temperatureUnit
+  language.value = payload.language
+  showSettings.value = false
+  statusText.value = `Settings updated: ${language.value}, ${temperatureUnit.value}`
+}
+
+function openAuth(mode) {
+  authMode.value = mode
+  showAuthPanel.value = true
+}
+
+function closeAuth() {
+  showAuthPanel.value = false
+}
+
+function switchAuthMode(mode) {
+  authMode.value = mode
+}
+
+function submitAuth(payload) {
+  statusText.value = `${payload.mode === 'signin' ? 'Signed in' : 'Registered'} in ${language.value}`
+  showAuthPanel.value = false
+}
 </script>
 
 <template>
@@ -101,6 +121,9 @@ function handleRangeSubmit(payload) {
     <WeatherHeader
       :selected-location="selectedLocation"
       :status-text="statusText"
+      :temperature-unit="temperatureUnit"
+      @open-settings="openSettings"
+      @open-auth="openAuth('signin')"
     />
 
     <main class="top-grid">
@@ -117,10 +140,29 @@ function handleRangeSubmit(payload) {
       :active-view="activeView"
       :selected-location="selectedLocation"
       :current-weather="currentWeather"
-      :forecast-days="forecastDays"
+      :forecast-days="formattedForecastDays"
       :custom-range="customRange"
+      :temperature-unit="temperatureUnit"
+      :current-temperature="formattedCurrentTemp"
+      :feels-like-text="formattedFeelsLike"
       @change-view="setActiveView"
       @submit-range="handleRangeSubmit"
+    />
+
+    <SettingsPanel
+      v-if="showSettings"
+      :language="language"
+      :temperature-unit="temperatureUnit"
+      @close="closeSettings"
+      @save="saveSettings"
+    />
+
+    <AuthPanel
+      v-if="showAuthPanel"
+      :mode="authMode"
+      @close="closeAuth"
+      @switch-mode="switchAuthMode"
+      @submit="submitAuth"
     />
   </div>
 </template>
@@ -140,7 +182,8 @@ function handleRangeSubmit(payload) {
 }
 
 :global(button),
-:global(input) {
+:global(input),
+:global(select) {
   font: inherit;
 }
 
@@ -149,6 +192,7 @@ function handleRangeSubmit(payload) {
   margin: 24px auto 40px;
   display: grid;
   gap: 20px;
+  position: relative;
 }
 
 .top-grid {

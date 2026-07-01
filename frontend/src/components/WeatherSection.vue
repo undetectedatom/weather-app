@@ -7,27 +7,9 @@
       </div>
 
       <nav class="time-selection" aria-label="Weather range">
-        <button
-          type="button"
-          :class="{ active: activeView === 'now' }"
-          @click="$emit('change-view', 'now')"
-        >
-          Now
-        </button>
-        <button
-          type="button"
-          :class="{ active: activeView === 'forecast' }"
-          @click="$emit('change-view', 'forecast')"
-        >
-          5 Day
-        </button>
-        <button
-          type="button"
-          :class="{ active: activeView === 'customRange' }"
-          @click="$emit('change-view', 'customRange')"
-        >
-          Custom range
-        </button>
+        <button type="button" :class="{ active: activeView === 'now' }" @click="$emit('change-view', 'now')">Now</button>
+        <button type="button" :class="{ active: activeView === 'forecast' }" @click="$emit('change-view', 'forecast')">5 Day</button>
+        <button type="button" :class="{ active: activeView === 'customRange' }" @click="$emit('change-view', 'customRange')">Custom range</button>
       </nav>
     </div>
 
@@ -44,7 +26,7 @@
         <div class="info-header">Current weather</div>
         <div class="info-content">
           <div class="weather-icon">{{ currentWeather.icon }}</div>
-          <strong>{{ currentWeather.temperature }}</strong>
+          <strong>{{ currentTemperature }}</strong>
           <p>{{ currentWeather.condition }}</p>
         </div>
       </article>
@@ -52,7 +34,7 @@
       <article class="info-card">
         <div class="info-header">Useful details</div>
         <div class="info-content details-list">
-          <p>{{ currentWeather.feelsLike }}</p>
+          <p>{{ feelsLikeText }}</p>
           <p>{{ currentWeather.humidity }}</p>
           <p>{{ currentWeather.wind }}</p>
         </div>
@@ -131,6 +113,14 @@ const props = defineProps({
   },
   customRange: {
     type: Object,
+    required: true,
+  },
+  currentTemperature: {
+    type: String,
+    required: true,
+  },
+  feelsLikeText: {
+    type: String,
     required: true,
   },
 })
