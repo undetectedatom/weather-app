@@ -6,6 +6,7 @@ import MapPanel from './components/MapPanel.vue'
 import WeatherSection from './components/WeatherSection.vue'
 import SettingsPanel from './components/SettingsPanel.vue'
 import AuthPanel from './components/AuthPanel.vue'
+import DashboardPanel from './components/DashboardPanel.vue'
 
 const STORAGE_KEYS = {
   language: 'weather-app.language',
@@ -22,6 +23,7 @@ const showAuthPanel = ref(false)
 const authMode = ref('signin')
 const temperatureUnit = ref('C')
 const language = ref('English')
+const activePage = ref('home')
 
 const currentWeather = reactive({
   location: 'San Francisco',
@@ -41,6 +43,25 @@ const forecastDays = [
   { day: 'Thu', date: 'Jun 5', tempC: 21, condition: 'Partly Cloudy', dayInfo: 'Mixed sun and clouds during the day.', nightInfo: 'Mild night with some cloud cover.' },
   { day: 'Fri', date: 'Jun 6', tempC: 25, condition: 'Clear', dayInfo: 'Bright and dry with good visibility.', nightInfo: 'Clear skies and light winds overnight.' },
 ]
+
+const savedWeatherRecords = ref([
+  {
+    id: 1,
+    location: 'San Francisco',
+    startDate: '2026-06-01',
+    endDate: '2026-06-05',
+    temperature: '24°C',
+    status: 'Active',
+  },
+  {
+    id: 2,
+    location: 'Tokyo',
+    startDate: '2026-06-10',
+    endDate: '2026-06-15',
+    temperature: '29°C',
+    status: 'Saved',
+  },
+])
 
 const customRange = reactive({
   startDate: '',
@@ -155,7 +176,28 @@ function switchAuthMode(mode) {
 
 function submitAuth(payload) {
   statusText.value = `${payload.mode === 'signin' ? 'Signed in' : 'Registered'} in ${language.value}`
+  activePage.value = 'dashboard'
   showAuthPanel.value = false
+}
+
+function openDashboard() {
+  activePage.value = 'dashboard'
+}
+
+function backToHome() {
+  activePage.value = 'home'
+}
+
+function removeRecord(recordId) {
+  savedWeatherRecords.value = savedWeatherRecords.value.filter((item) => item.id !== recordId)
+}
+
+function exportRecords(format) {
+  statusText.value = `Exporting records as ${format.toUpperCase()}`
+}
+
+function updateRecord(recordId) {
+  statusText.value = `Update requested for record ${recordId}`
 }
 
 onMounted(() => {
@@ -176,29 +218,43 @@ onBeforeUnmount(() => {
       :temperature-unit="temperatureUnit"
       @open-settings="openSettings"
       @open-auth="openAuth('signin')"
+      @open-dashboard="openDashboard"
+      @home="backToHome"
     />
 
-    <main class="top-grid">
-      <SearchPanel
-        v-model:query="searchQuery"
-        :error-message="searchError"
-        @search="handleSearch"
+    <template v-if="activePage === 'home'">
+      <main class="top-grid">
+        <SearchPanel
+          v-model:query="searchQuery"
+          :error-message="searchError"
+          @search="handleSearch"
+        />
+
+        <MapPanel :location-label="selectedLocation" />
+      </main>
+
+      <WeatherSection
+        :active-view="activeView"
+        :selected-location="selectedLocation"
+        :current-weather="currentWeather"
+        :forecast-days="formattedForecastDays"
+        :custom-range="customRange"
+        :temperature-unit="temperatureUnit"
+        :current-temperature="formattedCurrentTemp"
+        :feels-like-text="formattedFeelsLike"
+        @change-view="setActiveView"
+        @submit-range="handleRangeSubmit"
       />
+    </template>
 
-      <MapPanel :location-label="selectedLocation" />
-    </main>
-
-    <WeatherSection
-      :active-view="activeView"
-      :selected-location="selectedLocation"
-      :current-weather="currentWeather"
-      :forecast-days="formattedForecastDays"
-      :custom-range="customRange"
+    <DashboardPanel
+      v-else
+      :records="savedWeatherRecords"
       :temperature-unit="temperatureUnit"
-      :current-temperature="formattedCurrentTemp"
-      :feels-like-text="formattedFeelsLike"
-      @change-view="setActiveView"
-      @submit-range="handleRangeSubmit"
+      @back="backToHome"
+      @update-record="updateRecord"
+      @delete-record="removeRecord"
+      @export-records="exportRecords"
     />
 
     <SettingsPanel

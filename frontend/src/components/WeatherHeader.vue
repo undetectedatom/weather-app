@@ -15,8 +15,10 @@
     <div class="header-right">
       <button class="ghost-button" type="button">{{ selectedLocation }}</button>
       <button class="ghost-button" type="button">{{ temperatureUnit }}°</button>
+      <button class="primary-button" type="button" @click="$emit('open-dashboard')">Dashboard</button>
       <button class="primary-button" type="button" @click="$emit('open-settings')">Settings</button>
       <button class="primary-button" type="button" @click="$emit('open-auth')">Sign In</button>
+      <button class="ghost-button" type="button" @click="$emit('home')">Home</button>
     </div>
   </header>
 </template>
@@ -37,7 +39,7 @@ defineProps({
   },
 })
 
-defineEmits(['open-settings', 'open-auth'])
+defineEmits(['open-settings', 'open-auth', 'open-dashboard', 'home'])
 </script>
 
 <style scoped>
