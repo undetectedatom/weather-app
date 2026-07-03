@@ -23,7 +23,11 @@
       </article>
     </div>
 
-    <div class="table-shell">
+    <p v-if="errorMessage" class="error-message">{{ errorMessage }}</p>
+    <p v-else-if="loading" class="helper-text">Loading saved records...</p>
+    <p v-else-if="!records.length" class="helper-text">No saved records yet. Sign in and save a custom date range to populate the dashboard.</p>
+
+    <div v-else class="table-shell">
       <table>
         <thead>
           <tr>
@@ -73,6 +77,14 @@ defineProps({
   temperatureUnit: {
     type: String,
     required: true,
+  },
+  loading: {
+    type: Boolean,
+    default: false,
+  },
+  errorMessage: {
+    type: String,
+    default: '',
   },
 })
 
@@ -140,6 +152,24 @@ p {
 .summary-label {
   color: #6f8174;
   margin-bottom: 8px;
+}
+
+.helper-text,
+.error-message {
+  border-radius: 14px;
+  padding: 14px;
+}
+
+.helper-text {
+  background: #f7faf7;
+  border: 1px solid #dbe4dc;
+  color: #4f6754;
+}
+
+.error-message {
+  background: #fff4f4;
+  border: 1px solid #e4bbbb;
+  color: #a63a3a;
 }
 
 .table-shell {

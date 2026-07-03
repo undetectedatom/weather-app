@@ -21,8 +21,10 @@
           <input v-model="password" type="password" placeholder="••••••••" />
         </label>
 
-        <button type="submit">{{ mode === 'signin' ? 'Sign In' : 'Register' }}</button>
+        <button type="submit" :disabled="loading">{{ loading ? 'Please wait...' : (mode === 'signin' ? 'Sign In' : 'Register') }}</button>
       </form>
+
+      <p v-if="errorMessage" class="error-message">{{ errorMessage }}</p>
 
       <div class="switcher">
         <p v-if="mode === 'signin'">
@@ -39,18 +41,33 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 
 const props = defineProps({
   mode: {
     type: String,
     required: true,
   },
+  loading: {
+    type: Boolean,
+    default: false,
+  },
+  errorMessage: {
+    type: String,
+    default: '',
+  },
 })
 
 const emit = defineEmits(['close', 'switch-mode', 'submit'])
 const email = ref('')
 const password = ref('')
+
+watch(
+  () => props.mode,
+  () => {
+    password.value = ''
+  }
+)
 
 function submitAuth() {
   emit('submit', {
@@ -137,6 +154,11 @@ p {
   background: #2f7d4b;
   color: white;
   border-color: #7ab48a;
+}
+
+.error-message {
+  margin-top: 14px;
+  color: #a63a3a;
 }
 
 .icon-button,

@@ -8,7 +8,8 @@
     <div class="map">
       <div class="map-overlay">
         <p>{{ locationLabel }}</p>
-        <span>Later this can show an approximate point of interest or resolved location.</span>
+        <span>{{ regionLabel || 'Resolved location details will appear here.' }}</span>
+        <strong v-if="latitude != null && longitude != null">{{ latitude.toFixed(3) }}, {{ longitude.toFixed(3) }}</strong>
       </div>
     </div>
   </aside>
@@ -19,6 +20,18 @@ defineProps({
   locationLabel: {
     type: String,
     required: true,
+  },
+  regionLabel: {
+    type: String,
+    default: '',
+  },
+  latitude: {
+    type: Number,
+    default: null,
+  },
+  longitude: {
+    type: Number,
+    default: null,
   },
 })
 </script>
@@ -57,7 +70,9 @@ p {
 .map {
   min-height: 240px;
   border-radius: 14px;
-  background: #f3f7f3;
+  background:
+    radial-gradient(circle at top left, rgba(122, 180, 138, 0.26), transparent 34%),
+    linear-gradient(135deg, #f3f7f3 0%, #e6f0e8 100%);
   border: 1px solid #cfd8cf;
   position: relative;
   overflow: hidden;

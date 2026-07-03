@@ -15,8 +15,12 @@
         type="text"
         placeholder="Try: Tokyo, 10001, Golden Gate Bridge"
       />
-      <button type="submit">Submit</button>
+      <button type="submit" :disabled="loading">{{ loading ? 'Loading...' : 'Submit' }}</button>
     </form>
+
+    <button class="secondary-button" type="button" :disabled="currentLocationLoading" @click="$emit('use-current-location')">
+      {{ currentLocationLoading ? 'Locating...' : 'Use my current location' }}
+    </button>
 
     <p v-if="errorMessage" class="error-message">{{ errorMessage }}</p>
 
@@ -40,9 +44,17 @@ const props = defineProps({
     type: String,
     default: '',
   },
+  loading: {
+    type: Boolean,
+    default: false,
+  },
+  currentLocationLoading: {
+    type: Boolean,
+    default: false,
+  },
 })
 
-const emit = defineEmits(['update:query', 'search'])
+const emit = defineEmits(['update:query', 'search', 'use-current-location'])
 const localQuery = ref(props.query)
 
 watch(
@@ -113,13 +125,27 @@ p {
   color: #17311f;
 }
 
-.search-form button {
+.search-form button,
+.secondary-button {
   border: 1px solid #7ab48a;
   border-radius: 12px;
   padding: 10px 14px;
   cursor: pointer;
+}
+
+.search-form button {
   background: #2f7d4b;
   color: white;
+}
+
+.secondary-button {
+  background: #edf5ef;
+  color: #23402e;
+}
+
+button:disabled {
+  cursor: wait;
+  opacity: 0.72;
 }
 
 .error-message {
@@ -149,7 +175,8 @@ p {
     align-items: stretch;
   }
 
-  .search-form button {
+  .search-form button,
+  .secondary-button {
     width: 100%;
   }
 }

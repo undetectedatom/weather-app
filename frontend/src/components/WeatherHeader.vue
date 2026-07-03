@@ -17,7 +17,8 @@
       <button class="ghost-button" type="button">{{ temperatureUnit }}°</button>
       <button class="primary-button" type="button" @click="$emit('open-dashboard')">Dashboard</button>
       <button class="primary-button" type="button" @click="$emit('open-settings')">Settings</button>
-      <button class="primary-button" type="button" @click="$emit('open-auth')">Sign In</button>
+      <button v-if="!isAuthenticated" class="primary-button" type="button" @click="$emit('open-auth')">Sign In</button>
+      <button v-else class="ghost-button" type="button" @click="$emit('logout')">{{ userEmail || 'Sign Out' }}</button>
       <button class="ghost-button" type="button" @click="$emit('home')">Home</button>
     </div>
   </header>
@@ -37,9 +38,17 @@ defineProps({
     type: String,
     required: true,
   },
+  isAuthenticated: {
+    type: Boolean,
+    default: false,
+  },
+  userEmail: {
+    type: String,
+    default: '',
+  },
 })
 
-defineEmits(['open-settings', 'open-auth', 'open-dashboard', 'home'])
+defineEmits(['open-settings', 'open-auth', 'open-dashboard', 'home', 'logout'])
 </script>
 
 <style scoped>

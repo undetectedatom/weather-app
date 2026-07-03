@@ -13,6 +13,8 @@
       </nav>
     </div>
 
+    <p v-if="errorMessage" class="error-banner">{{ errorMessage }}</p>
+
     <div v-if="activeView === 'now'" class="summary-grid">
       <article class="info-card highlight-card">
         <div class="info-header">Location</div>
@@ -58,16 +60,51 @@
         </label>
         <button type="submit">Check range</button>
       </form>
+
+      <div v-if="rangeSummary" class="range-summary-card">
+        <strong>{{ rangeSummary.start_date }} to {{ rangeSummary.end_date }}</strong>
+        <p>Average {{ rangeSummary.averageTemp }}</p>
+        <p>High {{ rangeSummary.maxTemp }} / Low {{ rangeSummary.minTemp }}</p>
+      </div>
+
+      <section v-if="rangeDays.length" class="forecast-list">
+        <article v-for="item in rangeDays" :key="item.date" class="forecast-card">
+          <details>
+            <summary>
+              <div class="forecast-summary">
+                <div>
+                  <strong>{{ item.day }}</strong>
+                  <p>{{ item.dateLabel }}</p>
+                </div>
+                <div class="forecast-meta">
+                  <span class="forecast-condition">{{ item.condition }}</span>
+                  <span class="forecast-temp">{{ item.temp }}</span>
+                </div>
+              </div>
+            </summary>
+            <div class="forecast-detail-grid">
+              <div>
+                <p class="detail-label">Day</p>
+                <p>{{ item.dayInfo }}</p>
+              </div>
+              <div>
+                <p class="detail-label">Night</p>
+                <p>{{ item.nightInfo }}</p>
+              </div>
+            </div>
+          </details>
+        </article>
+      </section>
     </section>
 
     <section v-else class="forecast-list">
-      <article v-for="item in forecastDays" :key="item.day" class="forecast-card">
+      <article v-for="item in forecastDays" :key="item.date" class="forecast-card">
         <details>
           <summary>
             <div class="forecast-summary">
               <div>
                 <strong>{{ item.day }}</strong>
-                <p>{{ item.date }}</p>
+                <p>{{ item.dateLabel }}</p>
               </div>
               <div class="forecast-meta">
                 <span class="forecast-condition">{{ item.condition }}</span>
@@ -115,6 +152,14 @@ const props = defineProps({
     type: Object,
     required: true,
   },
+  rangeDays: {
+    type: Array,
+    default: () => [],
+  },
+  rangeSummary: {
+    type: Object,
+    default: null,
+  },
   currentTemperature: {
     type: String,
     required: true,
@@ -122,6 +167,10 @@ const props = defineProps({
   feelsLikeText: {
     type: String,
     required: true,
+  },
+  errorMessage: {
+    type: String,
+    default: '',
   },
 })
 
@@ -187,6 +236,14 @@ p {
   margin: 0;
 }
 
+.error-banner {
+  border: 1px solid #e4bbbb;
+  border-radius: 12px;
+  padding: 12px 14px;
+  background: #fff4f4;
+  color: #a63a3a;
+}
+
 .time-selection {
   display: flex;
   flex-wrap: wrap;
@@ -216,7 +273,8 @@ p {
 
 .info-card,
 .forecast-card,
-.custom-range-card {
+.custom-range-card,
+.range-summary-card {
   border-radius: 14px;
   border: 1px solid #cfd8cf;
   background: white;
@@ -251,6 +309,12 @@ p {
   gap: 14px;
 }
 
+.range-summary-card {
+  background: #f5faf6;
+  display: grid;
+  gap: 6px;
+}
+
 .range-form {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -261,33 +325,30 @@ p {
 .range-form label {
   display: grid;
   gap: 6px;
-  color: #4f6754;
-  font-size: 0.92rem;
 }
 
-.range-form input {
+.range-form input,
+.range-form button {
   border: 1px solid #cfd8cf;
   border-radius: 12px;
   padding: 12px 14px;
-  background: white;
 }
 
 .range-form button {
-  border: 1px solid #7ab48a;
-  border-radius: 12px;
-  padding: 10px 14px;
   cursor: pointer;
   background: #2f7d4b;
-  color: white;
+  border-color: #7ab48a;
+  color: #fff;
 }
 
 .forecast-list {
   display: grid;
-  gap: 10px;
+  gap: 12px;
 }
 
 .forecast-card details {
-  width: 100%;
+  display: grid;
+  gap: 14px;
 }
 
 .forecast-card summary {
@@ -303,24 +364,21 @@ p {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: 14px;
 }
 
 .forecast-meta {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  text-align: right;
+  display: grid;
+  gap: 4px;
+  justify-items: end;
 }
 
 .forecast-condition {
-  color: #6f8174;
+  color: #4f6754;
 }
 
 .forecast-temp {
-  font-size: 1.1rem;
   font-weight: 700;
-  color: #23402e;
 }
 
 .forecast-card p,
@@ -331,34 +389,15 @@ p {
 .forecast-detail-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-  margin-top: 14px;
-  padding-top: 14px;
-  border-top: 1px solid #dbe4dc;
-}
-
-.detail-label {
-  font-size: 0.85rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  margin-bottom: 6px;
+  gap: 14px;
 }
 
 @media (max-width: 960px) {
-  .section-heading-row,
   .summary-grid,
   .range-form,
-  .forecast-detail-grid {
+  .forecast-detail-grid,
+  .section-heading-row {
     grid-template-columns: 1fr;
-  }
-
-  .forecast-summary {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .forecast-meta {
-    text-align: left;
   }
 }
 </style>
