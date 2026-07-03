@@ -19,8 +19,8 @@ async def get_current_weather(location: str) -> WeatherResponse:
 async def get_current_weather_for_coordinates(lat: float = Query(...), lon: float = Query(...)) -> WeatherResponse:
     try:
         return await weather_service.get_current_weather_by_coordinates(lat, lon)
-    except WeatherServiceError as exc:
-        raise HTTPException(status_code=exc.status_code, detail={"code": exc.code, "message": str(exc), "details": None}) from exc
+    except (LocationLookupError, WeatherServiceError) as exc:
+        raise HTTPException(status_code=exc.status_code if hasattr(exc, 'status_code') else 400, detail={"code": exc.code, "message": str(exc), "details": None}) from exc
 
 
 @router.get("/forecast", response_model=WeatherResponse)

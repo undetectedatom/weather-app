@@ -82,12 +82,15 @@ h2, p { margin: 0; }
 .suggestion-item { border: 1px solid #dbe4dc; border-radius: 12px; background: #f7faf7; color: #17311f; text-align: left; padding: 10px 12px; display: grid; gap: 2px; cursor: pointer; }
 .search-form button, .secondary-button { border: 1px solid #7ab48a; border-radius: 12px; padding: 10px 14px; cursor: pointer; }
 .search-form button { background: #2f7d4b; color: white; }
-.secondary-button { background: #edf5ef; color: #23402e; }
+.secondary-button { background: #edf5ef; color: #23402e; max-width: 360px; }
 button:disabled { cursor: wait; opacity: 0.72; }
 .error-message { color: #a63a3a; font-size: 0.95rem; }
 .tips { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
 .tips span { padding: 8px 12px; border-radius: 999px; background: #edf5ef; border: 1px solid #d6e1d8; color: #4f6754; font-size: 0.92rem; }
 @media (max-width: 960px) {
+  .secondary-button { width: fit-content; }
+}
+@media (max-width: 720px) {
   .search-form { flex-direction: column; align-items: stretch; }
   .search-form button, .secondary-button { width: 100%; }
 }

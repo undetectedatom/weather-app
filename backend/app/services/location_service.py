@@ -48,18 +48,29 @@ class LocationService:
             raise LocationLookupError("Coordinates are out of range", code="INVALID_COORDINATES")
 
         async with httpx.AsyncClient(timeout=20.0) as client:
-            response = await client.get(
-                f"{settings.geocoding_base_url}/reverse",
-                params={"latitude": lat, "longitude": lon, "language": "en", "format": "json"},
-            )
-            response.raise_for_status()
+            try:
+                response = await client.get(
+                    f"{settings.geocoding_base_url}/reverse",
+                    params={"latitude": lat, "longitude": lon, "language": "en", "format": "json"},
+                )
+                response.raise_for_status()
+            except httpx.HTTPStatusError as exc:
+                if exc.response.status_code == 404:
+                    return self._coordinate_result(lat, lon)
+                raise LocationLookupError("Location lookup failed", code="INVALID_LOCATION", status_code=502) from exc
+            except httpx.HTTPError as exc:
+                raise LocationLookupError("Location lookup failed", code="INVALID_LOCATION", status_code=502) from exc
 
         payload = response.json()
         results = payload.get("results") or []
         if results:
             return self._normalize_result(results[0])
 
-        return LocationResult(name=f"{lat}, {lon}", latitude=lat, longitude=lon, display_label=f"{lat}, {lon}")
+        return self._coordinate_result(lat, lon)
+
+    def _coordinate_result(self, lat: float, lon: float) -> LocationResult:
+        label = f"{lat}, {lon}"
+        return LocationResult(name=label, latitude=lat, longitude=lon, display_label=label)
 
     def _normalize_result(self, item: dict) -> LocationResult:
         region = item.get("admin1") or item.get("admin2")

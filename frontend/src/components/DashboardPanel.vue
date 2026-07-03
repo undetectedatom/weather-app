@@ -55,5 +55,6 @@ th { background: #f5f8f4; color: #4f6754; }
 .action-cell { display: flex; gap: 8px; flex-wrap: wrap; }
 .export-panel { display: flex; align-items: center; justify-content: space-between; gap: 12px; border: 1px solid #cfd8cf; border-radius: 14px; padding: 16px; background: #f7faf7; }
 .export-actions { display: flex; gap: 8px; flex-wrap: wrap; }
-@media (max-width: 960px) { .dashboard-summary, .export-panel { grid-template-columns: 1fr; flex-direction: column; align-items: stretch; } .dashboard-header { flex-direction: column; align-items: stretch; } .action-cell { flex-direction: column; } .export-actions button, .back-button { width: 100%; } }
+@media (max-width: 960px) { .export-panel { flex-direction: column; align-items: stretch; } .dashboard-header { flex-wrap: wrap; align-items: center; } .export-actions button, .back-button { width: auto; } }
+@media (max-width: 720px) { .dashboard-summary { grid-template-columns: 1fr; } .dashboard-header { flex-direction: column; align-items: stretch; } .action-cell { flex-direction: column; } .export-actions button, .back-button { width: 100%; } }
 </style>

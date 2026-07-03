@@ -260,6 +260,17 @@ async function fetchForecast(location) {
   forecastDays.value = payload.forecast_days
 }
 
+async function fetchForecastSafely(location) {
+  try {
+    await fetchForecast(location)
+    return true
+  } catch (error) {
+    forecastDays.value = []
+    weatherError.value = error.message || '5-day forecast is unavailable right now.'
+    return false
+  }
+}
+
 function buildDateLabel(record) {
   if (record.start_date && record.end_date) {
     if (record.start_date === record.end_date) return record.start_date
@@ -319,8 +330,11 @@ async function handleSearch(query, options = {}) {
 
   try {
     await fetchCurrentWeather(locationQuery)
-    await fetchForecast(locationQuery)
+    const forecastLoaded = await fetchForecastSafely(locationQuery)
     statusText.value = messages.value.statuses.weatherLoaded(selectedLocation.value)
+    if (forecastLoaded) {
+      weatherError.value = ''
+    }
     if (options.persist) {
       await saveCurrentSearchRecord(locationQuery)
       if (isAuthenticated.value) {
@@ -353,14 +367,14 @@ async function handleCurrentLocation() {
     activeLocationQuery.value = `${latitude}, ${longitude}`
     const payload = await apiRequest(`/weather/current-location?lat=${latitude}&lon=${longitude}`)
     normalizeCurrentWeather(payload)
-    await fetchForecast(activeLocationQuery.value)
+    const forecastLoaded = await fetchForecastSafely(activeLocationQuery.value)
     statusText.value = messages.value.statuses.currentLocationLoaded
+    if (forecastLoaded) {
+      weatherError.value = ''
+    }
     if (isAuthenticated.value) {
       await saveCurrentSearchRecord(activeLocationQuery.value)
       await fetchHistory()
-    } else {
-      weatherError.value = messages.value.tips.currentLocationSignIn
-      openAuth('signin')
     }
   } catch (error) {
     searchError.value = error.message || 'Unable to determine your current location.'
@@ -644,7 +658,6 @@ onBeforeUnmount(() => {
   <div class="page-shell">
     <WeatherHeader
       :selected-location="selectedLocation"
-      :status-text="statusText"
       :temperature-unit="temperatureUnit"
       :is-authenticated="isAuthenticated"
       :user-email="authUser?.email ?? ''"
