@@ -13,6 +13,7 @@
           v-model="localQuery"
           type="text"
           :placeholder="labels.placeholder"
+          @input="emit('typing', localQuery)"
         />
         <div v-if="suggestions.length" class="suggestions-panel">
           <div class="suggestions-title">{{ labels.suggestions }}</div>
@@ -57,7 +58,7 @@ const props = defineProps({
   labels: { type: Object, required: true },
 })
 
-const emit = defineEmits(['update:query', 'search', 'use-current-location', 'select-suggestion'])
+const emit = defineEmits(['update:query', 'search', 'use-current-location', 'select-suggestion', 'typing'])
 const localQuery = ref(props.query)
 
 watch(() => props.query, (value) => { localQuery.value = value })

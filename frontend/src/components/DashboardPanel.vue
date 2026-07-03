@@ -14,13 +14,12 @@
     <p v-else-if="!records.length" class="helper-text">{{ labels.helper }}</p>
     <div v-else class="table-shell">
       <table>
-        <thead><tr><th>{{ labels.location }}</th><th>{{ labels.dateRange }}</th><th>{{ labels.temp }}</th><th>{{ labels.status }}</th><th>{{ labels.actions }}</th></tr></thead>
+        <thead><tr><th>{{ labels.location }}</th><th>{{ labels.dateRange }}</th><th>{{ labels.temp }}</th><th>{{ labels.actions }}</th></tr></thead>
         <tbody>
           <tr v-for="record in records" :key="record.id">
             <td>{{ record.location }}</td>
-            <td>{{ record.startDate }} to {{ record.endDate }}</td>
+            <td>{{ record.dateLabel }}</td>
             <td>{{ record.temperature }}</td>
-            <td>{{ record.status }}</td>
             <td class="action-cell"><button type="button" @click="$emit('update-record', record.id)">{{ labels.edit }}</button><button type="button" @click="$emit('delete-record', record.id)">{{ labels.delete }}</button></td>
           </tr>
         </tbody>

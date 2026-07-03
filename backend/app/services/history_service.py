@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from uuid import UUID
 
 from sqlmodel import Session, col, select
@@ -22,8 +22,8 @@ class HistoryError(Exception):
 
 class HistoryService:
     async def create_record(self, session: Session, user: User, payload: HistoryCreate) -> HistoryPublic:
-        snapshot_type = self._snapshot_type(payload.start_date, payload.end_date)
-        weather = await self._fetch_weather(payload.location, payload.start_date, payload.end_date)
+        request_start, request_end, snapshot_type, stored_start, stored_end = self._normalize_request_dates(payload.start_date, payload.end_date)
+        weather = await self._fetch_weather(payload.location, request_start, request_end)
         record = WeatherHistory(
             user_id=user.id,
             location_query=payload.location,
@@ -32,8 +32,8 @@ class HistoryService:
             country=weather.location.country,
             latitude=weather.location.latitude,
             longitude=weather.location.longitude,
-            start_date=payload.start_date,
-            end_date=payload.end_date,
+            start_date=stored_start,
+            end_date=stored_end,
             snapshot_type=snapshot_type,
             status=payload.status,
             notes=payload.notes,
@@ -54,21 +54,30 @@ class HistoryService:
 
     async def update_record(self, session: Session, user: User, record_id: str, payload: HistoryUpdate) -> HistoryPublic:
         record = self._owned_record(session, user, record_id)
-        next_location = payload.location or record.location_query
-        next_start = payload.start_date if payload.start_date is not None else record.start_date
-        next_end = payload.end_date if payload.end_date is not None else record.end_date
+        field_set = payload.model_fields_set
+        next_location = payload.location if "location" in field_set else record.location_query
 
-        if payload.location is not None or payload.start_date is not None or payload.end_date is not None:
-            weather = await self._fetch_weather(next_location, next_start, next_end)
+        current_request_start, current_request_end = self._request_dates_from_record(record)
+        if "start_date" in field_set or "end_date" in field_set:
+            start_candidate = payload.start_date if "start_date" in field_set else current_request_start
+            end_candidate = payload.end_date if "end_date" in field_set else current_request_end
+        else:
+            start_candidate = current_request_start
+            end_candidate = current_request_end
+
+        request_start, request_end, snapshot_type, stored_start, stored_end = self._normalize_request_dates(start_candidate, end_candidate)
+
+        if {"location", "start_date", "end_date"} & field_set:
+            weather = await self._fetch_weather(next_location, request_start, request_end)
             record.location_query = next_location
             record.resolved_name = weather.location.name
             record.region = weather.location.region
             record.country = weather.location.country
             record.latitude = weather.location.latitude
             record.longitude = weather.location.longitude
-            record.start_date = next_start
-            record.end_date = next_end
-            record.snapshot_type = self._snapshot_type(next_start, next_end)
+            record.start_date = stored_start
+            record.end_date = stored_end
+            record.snapshot_type = snapshot_type
             record.weather_payload = weather.model_dump(mode="json")
 
         if payload.status is not None:
@@ -117,10 +126,18 @@ class HistoryService:
             raise HistoryError("Weather history record was not found")
         return record
 
-    def _snapshot_type(self, start_date, end_date) -> SnapshotType:
-        if start_date and end_date:
-            return SnapshotType.range
-        return SnapshotType.current
+    def _normalize_request_dates(self, start_date: date | None, end_date: date | None) -> tuple[date | None, date | None, SnapshotType, date, date]:
+        today = datetime.now(timezone.utc).date()
+        if start_date is None and end_date is None:
+            return None, None, SnapshotType.current, today, today
+        if start_date is None or end_date is None:
+            raise HistoryError("Provide both start_date and end_date, or leave both blank for current weather.", code="INVALID_DATE_RANGE", status_code=400)
+        return start_date, end_date, SnapshotType.range, start_date, end_date
+
+    def _request_dates_from_record(self, record: WeatherHistory) -> tuple[date | None, date | None]:
+        if record.snapshot_type == SnapshotType.current:
+            return None, None
+        return record.start_date, record.end_date
 
     async def _fetch_weather(self, location: str, start_date, end_date):
         try:

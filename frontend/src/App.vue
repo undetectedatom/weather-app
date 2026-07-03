@@ -7,9 +7,12 @@ import WeatherSection from './components/WeatherSection.vue'
 import SettingsPanel from './components/SettingsPanel.vue'
 import AuthPanel from './components/AuthPanel.vue'
 import DashboardPanel from './components/DashboardPanel.vue'
+import EditRecordPanel from './components/EditRecordPanel.vue'
 import { apiDownload, apiRequest } from './api'
 
 const DEFAULT_LOCATION_QUERY = 'San Francisco'
+const MAX_RANGE_DAYS = 14
+const MAX_DISTANCE_FROM_TODAY_DAYS = 14
 const STORAGE_KEYS = {
   language: 'weather-app.language',
   temperatureUnit: 'weather-app.temperature-unit',
@@ -41,158 +44,61 @@ const TRANSLATIONS = {
       signedOut: 'Signed out',
       dashboardSignIn: 'Sign in to open the dashboard',
       recordDeleted: 'Record deleted',
-      recordUpdated: (status) => `Record marked as ${status}`,
+      recordUpdated: 'Record updated',
       exportDone: (format) => `Exported records as ${format.toUpperCase()}`,
       customRangeLoaded: (location) => `Custom range loaded for ${location}`,
     },
     tips: {
-      currentLocationSignIn: 'Sign in to save searches and unlock custom date-range history.',
-      customRangeSignIn: 'Sign in to unlock custom date-range lookups, saved history, and exports.',
-      futureRange: 'Choose dates on or before today for past observed weather. Use Now or 5 Day for current and future conditions.',
+      currentLocationSignIn: 'Sign in to save searches and unlock custom functions.',
+      customRangeSignIn: 'Sign in to use custom date ranges, saved history, and exports.',
+      dateRangeRule: `Choose a date range of ${MAX_RANGE_DAYS} days or fewer, and keep both dates within ${MAX_DISTANCE_FROM_TODAY_DAYS} days of today.`,
       blankAuth: 'Email and password are both required.',
+      editDateRule: 'Provide both dates to edit a range, or leave both blank for current weather.',
     },
-    header: {
-      eyebrow: 'Weather demo',
-      dashboard: 'Dashboard',
-      settings: 'Settings',
-      signIn: 'Sign In',
-      signOutFallback: 'Sign Out',
-      home: 'Home',
-    },
-    search: {
-      eyebrow: 'Search',
-      title: 'Find weather by location',
-      description: 'Enter a city, zip code, landmark, or coordinates. Suggestions will appear while you type.',
-      placeholder: 'Try: Tokyo, 10001, Golden Gate Bridge',
-      submit: 'Submit',
-      loading: 'Loading...',
-      currentLocation: 'Use my current location',
-      currentLocationLoading: 'Locating...',
-      suggestions: 'Suggestions',
-      city: 'City / town',
-      zip: 'Zip code',
-      coordinates: 'Coordinates',
-    },
-    map: {
-      eyebrow: 'Map preview',
-      title: 'Location area',
-      fallback: 'Resolved location details will appear here.',
-      openStreetMap: 'Open larger map',
-    },
-    weather: {
-      eyebrow: 'Weather',
-      title: 'Current conditions',
-      now: 'Now',
-      forecast: '5 Day',
-      customRange: 'Custom range',
-      location: 'Location',
-      currentWeather: 'Current weather',
-      usefulDetails: 'Useful details',
-      customEyebrow: 'Custom range',
-      customTitle: 'Choose a date range',
-      startDate: 'Start date',
-      endDate: 'End date',
-      checkRange: 'Check range',
-      average: 'Average',
-      highLow: 'High',
-      day: 'Day',
-      night: 'Night',
-    },
-    auth: {
-      eyebrow: 'Account',
-      signInTitle: 'Sign in',
-      registerTitle: 'Register',
-      email: 'Email',
-      password: 'Password',
-      signIn: 'Sign In',
-      register: 'Register',
-      close: 'Close',
-      wait: 'Please wait...',
-      noAccount: "Don't have an account?",
-      haveAccount: 'Already have an account?',
-    },
-    settings: {
-      eyebrow: 'Settings',
-      title: 'Display options',
-      language: 'Language',
-      temperature: 'Temperature',
-      save: 'Save settings',
-      close: 'Close',
-      celsius: 'Celsius',
-      fahrenheit: 'Fahrenheit',
-    },
-    dashboard: {
-      eyebrow: 'User workspace',
-      title: 'Saved weather records',
-      back: 'Back to home',
-      records: 'Records',
-      unit: 'Unit',
-      export: 'Export',
-      exportLabel: 'Export data',
-      exportTitle: 'Download saved weather records',
-      helper: 'No saved records yet. Sign in and search or save a custom date range to populate the dashboard.',
-      loading: 'Loading saved records...',
-      location: 'Location',
-      dateRange: 'Date range',
-      temp: 'Temp',
-      status: 'Status',
-      actions: 'Actions',
-      edit: 'Edit',
-      delete: 'Delete',
-      currentWeather: 'Current weather',
-    },
+    header: { eyebrow: 'Weather demo', dashboard: 'Dashboard', settings: 'Settings', signIn: 'Sign In', signOutFallback: 'Sign Out', home: 'Home' },
+    search: { eyebrow: 'Search', title: 'Find weather by location', description: 'Enter a city, zip code, landmark, or coordinates. Suggestions will appear while you type.', placeholder: 'Try: Tokyo, 10001, Golden Gate Bridge', submit: 'Submit', loading: 'Loading...', currentLocation: 'Use my current location', currentLocationLoading: 'Locating...', suggestions: 'Suggestions', city: 'City / town', zip: 'Zip code', coordinates: 'Coordinates' },
+    map: { eyebrow: 'Map preview', title: 'Location area', fallback: 'Resolved location details will appear here.', openStreetMap: 'Open larger map' },
+    weather: { eyebrow: 'Weather', title: 'Current conditions', now: 'Now', forecast: '5 Day', customRange: 'Custom range', location: 'Location', currentWeather: 'Current weather', usefulDetails: 'Useful details', customEyebrow: 'Custom range', customTitle: 'Choose a date range', startDate: 'Start date', endDate: 'End date', checkRange: 'Check range', checkingRange: 'Checking...', average: 'Average', highLow: 'High', day: 'Day', night: 'Night' },
+    auth: { eyebrow: 'Account', signInTitle: 'Sign in', registerTitle: 'Register', email: 'Email', password: 'Password', signIn: 'Sign In', register: 'Register', close: 'Close', wait: 'Please wait...', noAccount: "Don't have an account?", haveAccount: 'Already have an account?' },
+    settings: { eyebrow: 'Settings', title: 'Display options', language: 'Language', temperature: 'Temperature', save: 'Save settings', close: 'Close', celsius: 'Celsius', fahrenheit: 'Fahrenheit' },
+    dashboard: { eyebrow: 'User workspace', title: 'Saved weather records', back: 'Back to home', records: 'Records', unit: 'Unit', export: 'Export', exportLabel: 'Export data', exportTitle: 'Download saved weather records', helper: 'No saved records yet. Sign in and search or save a custom date range to populate the dashboard.', loading: 'Loading saved records...', location: 'Location', dateRange: 'Date range', temp: 'Temp', actions: 'Actions', edit: 'Edit', delete: 'Delete', currentWeather: 'Current weather' },
+    editRecord: { eyebrow: 'Edit record', title: 'Update saved weather record', close: 'Close', cancel: 'Cancel', save: 'Save changes', saving: 'Saving...', location: 'Location query', startDate: 'Start date', endDate: 'End date', notes: 'Notes', helper: 'Edit the location, date range, or notes. Leave both dates blank to store current weather instead of a date range.' },
   },
   Spanish: {
-    statuses: {
-      default: 'Mostrando una ubicacion predeterminada mientras eliges la tuya.',
-      searchPrompt: 'Ingresa una ubicacion para ver detalles',
-      settingsSaved: (language, unit) => `Configuracion actualizada: ${language}, ${unit}`,
-      weatherLoaded: (location) => `Mostrando el clima de ${location}`,
-      currentLocationLoaded: 'Mostrando el clima de tu ubicacion actual',
-      signedIn: (email) => `Sesion iniciada como ${email}`,
-      registered: (email) => `Registro completado como ${email}`,
-      signedOut: 'Sesion cerrada',
-      dashboardSignIn: 'Inicia sesion para abrir el panel',
-      recordDeleted: 'Registro eliminado',
-      recordUpdated: (status) => `Registro marcado como ${status}`,
-      exportDone: (format) => `Registros exportados como ${format.toUpperCase()}`,
-      customRangeLoaded: (location) => `Rango personalizado cargado para ${location}`,
-    },
-    tips: {
-      currentLocationSignIn: 'Inicia sesion para guardar busquedas y desbloquear el historial por rango de fechas.',
-      customRangeSignIn: 'Inicia sesion para desbloquear busquedas por rango, historial guardado y exportaciones.',
-      futureRange: 'Elige fechas de hoy o anteriores para el clima observado. Usa Ahora o 5 dias para condiciones actuales y futuras.',
-      blankAuth: 'Correo y contrasena son obligatorios.',
-    },
+    statuses: { default: 'Mostrando una ubicacion predeterminada mientras eliges la tuya.', searchPrompt: 'Ingresa una ubicacion para ver detalles', settingsSaved: (language, unit) => `Configuracion actualizada: ${language}, ${unit}`, weatherLoaded: (location) => `Mostrando el clima de ${location}`, currentLocationLoaded: 'Mostrando el clima de tu ubicacion actual', signedIn: (email) => `Sesion iniciada como ${email}`, registered: (email) => `Registro completado como ${email}`, signedOut: 'Sesion cerrada', dashboardSignIn: 'Inicia sesion para abrir el panel', recordDeleted: 'Registro eliminado', recordUpdated: 'Registro actualizado', exportDone: (format) => `Registros exportados como ${format.toUpperCase()}`, customRangeLoaded: (location) => `Rango personalizado cargado para ${location}` },
+    tips: { currentLocationSignIn: 'Inicia sesion para guardar busquedas y desbloquear funciones personalizadas.', customRangeSignIn: 'Inicia sesion para usar rangos personalizados, historial guardado y exportaciones.', dateRangeRule: `Elige un rango de ${MAX_RANGE_DAYS} dias o menos y manten ambas fechas dentro de ${MAX_DISTANCE_FROM_TODAY_DAYS} dias desde hoy.`, blankAuth: 'Correo y contrasena son obligatorios.', editDateRule: 'Ingresa ambas fechas para editar un rango o deja ambas vacias para el clima actual.' },
     header: { eyebrow: 'Demo del clima', dashboard: 'Panel', settings: 'Ajustes', signIn: 'Entrar', signOutFallback: 'Salir', home: 'Inicio' },
     search: { eyebrow: 'Busqueda', title: 'Busca el clima por ubicacion', description: 'Ingresa ciudad, codigo postal, punto de interes o coordenadas. Las sugerencias aparecen mientras escribes.', placeholder: 'Prueba: Tokyo, 10001, Golden Gate Bridge', submit: 'Buscar', loading: 'Cargando...', currentLocation: 'Usar mi ubicacion actual', currentLocationLoading: 'Ubicando...', suggestions: 'Sugerencias', city: 'Ciudad / pueblo', zip: 'Codigo postal', coordinates: 'Coordenadas' },
     map: { eyebrow: 'Mapa', title: 'Area de ubicacion', fallback: 'Los detalles resueltos apareceran aqui.', openStreetMap: 'Abrir mapa grande' },
-    weather: { eyebrow: 'Clima', title: 'Condiciones actuales', now: 'Ahora', forecast: '5 dias', customRange: 'Rango', location: 'Ubicacion', currentWeather: 'Clima actual', usefulDetails: 'Detalles utiles', customEyebrow: 'Rango personalizado', customTitle: 'Elige un rango de fechas', startDate: 'Fecha inicial', endDate: 'Fecha final', checkRange: 'Consultar rango', average: 'Promedio', highLow: 'Alta', day: 'Dia', night: 'Noche' },
+    weather: { eyebrow: 'Clima', title: 'Condiciones actuales', now: 'Ahora', forecast: '5 dias', customRange: 'Rango', location: 'Ubicacion', currentWeather: 'Clima actual', usefulDetails: 'Detalles utiles', customEyebrow: 'Rango personalizado', customTitle: 'Elige un rango de fechas', startDate: 'Fecha inicial', endDate: 'Fecha final', checkRange: 'Consultar rango', checkingRange: 'Consultando...', average: 'Promedio', highLow: 'Alta', day: 'Dia', night: 'Noche' },
     auth: { eyebrow: 'Cuenta', signInTitle: 'Entrar', registerTitle: 'Registrarse', email: 'Correo', password: 'Contrasena', signIn: 'Entrar', register: 'Registrarse', close: 'Cerrar', wait: 'Espera...', noAccount: 'No tienes cuenta?', haveAccount: 'Ya tienes cuenta?' },
     settings: { eyebrow: 'Ajustes', title: 'Opciones de pantalla', language: 'Idioma', temperature: 'Temperatura', save: 'Guardar ajustes', close: 'Cerrar', celsius: 'Celsius', fahrenheit: 'Fahrenheit' },
-    dashboard: { eyebrow: 'Espacio del usuario', title: 'Registros guardados', back: 'Volver al inicio', records: 'Registros', unit: 'Unidad', export: 'Exportar', exportLabel: 'Exportar datos', exportTitle: 'Descargar registros guardados', helper: 'Aun no hay registros guardados. Inicia sesion y busca o guarda un rango para llenar el panel.', loading: 'Cargando registros...', location: 'Ubicacion', dateRange: 'Rango de fechas', temp: 'Temp', status: 'Estado', actions: 'Acciones', edit: 'Editar', delete: 'Eliminar', currentWeather: 'Clima actual' },
+    dashboard: { eyebrow: 'Espacio del usuario', title: 'Registros guardados', back: 'Volver al inicio', records: 'Registros', unit: 'Unidad', export: 'Exportar', exportLabel: 'Exportar datos', exportTitle: 'Descargar registros guardados', helper: 'Aun no hay registros guardados. Inicia sesion y busca o guarda un rango para llenar el panel.', loading: 'Cargando registros...', location: 'Ubicacion', dateRange: 'Rango de fechas', temp: 'Temp', actions: 'Acciones', edit: 'Editar', delete: 'Eliminar', currentWeather: 'Clima actual' },
+    editRecord: { eyebrow: 'Editar registro', title: 'Actualizar registro guardado', close: 'Cerrar', cancel: 'Cancelar', save: 'Guardar cambios', saving: 'Guardando...', location: 'Consulta de ubicacion', startDate: 'Fecha inicial', endDate: 'Fecha final', notes: 'Notas', helper: 'Edita la ubicacion, el rango o las notas. Deja ambas fechas vacias para guardar clima actual.' },
   },
   French: {
-    statuses: { default: 'Affichage dun lieu par defaut pendant que vous choisissez le votre.', searchPrompt: 'Saisissez un lieu pour voir les details', settingsSaved: (language, unit) => `Parametres mis a jour : ${language}, ${unit}`, weatherLoaded: (location) => `Affichage de la meteo pour ${location}`, currentLocationLoaded: 'Affichage de la meteo pour votre position actuelle', signedIn: (email) => `Connecte comme ${email}`, registered: (email) => `Compte cree pour ${email}`, signedOut: 'Deconnecte', dashboardSignIn: 'Connectez-vous pour ouvrir le tableau de bord', recordDeleted: 'Enregistrement supprime', recordUpdated: (status) => `Enregistrement marque comme ${status}`, exportDone: (format) => `Enregistrements exportes en ${format.toUpperCase()}`, customRangeLoaded: (location) => `Plage personnalisee chargee pour ${location}` },
-    tips: { currentLocationSignIn: 'Connectez-vous pour enregistrer les recherches et utiliser lhistorique par plage de dates.', customRangeSignIn: 'Connectez-vous pour debloquer les recherches par plage, lhistorique et les exports.', futureRange: 'Choisissez des dates aujourdhui ou avant pour la meteo observee. Utilisez Maintenant ou 5 jours pour les conditions actuelles et futures.', blankAuth: 'E-mail et mot de passe sont obligatoires.' },
+    statuses: { default: 'Affichage dun lieu par defaut pendant que vous choisissez le votre.', searchPrompt: 'Saisissez un lieu pour voir les details', settingsSaved: (language, unit) => `Parametres mis a jour : ${language}, ${unit}`, weatherLoaded: (location) => `Affichage de la meteo pour ${location}`, currentLocationLoaded: 'Affichage de la meteo pour votre position actuelle', signedIn: (email) => `Connecte comme ${email}`, registered: (email) => `Compte cree pour ${email}`, signedOut: 'Deconnecte', dashboardSignIn: 'Connectez-vous pour ouvrir le tableau de bord', recordDeleted: 'Enregistrement supprime', recordUpdated: 'Enregistrement mis a jour', exportDone: (format) => `Enregistrements exportes en ${format.toUpperCase()}`, customRangeLoaded: (location) => `Plage personnalisee chargee pour ${location}` },
+    tips: { currentLocationSignIn: 'Connectez-vous pour enregistrer les recherches et utiliser les fonctions personnalisees.', customRangeSignIn: 'Connectez-vous pour utiliser les plages personnalisees, lhistorique et les exports.', dateRangeRule: `Choisissez une plage de ${MAX_RANGE_DAYS} jours maximum et gardez les deux dates dans une fenetre de ${MAX_DISTANCE_FROM_TODAY_DAYS} jours autour daujourdhui.`, blankAuth: 'E-mail et mot de passe sont obligatoires.', editDateRule: 'Renseignez les deux dates pour modifier une plage, ou laissez les deux vides pour la meteo actuelle.' },
     header: { eyebrow: 'Demo meteo', dashboard: 'Tableau', settings: 'Parametres', signIn: 'Connexion', signOutFallback: 'Deconnexion', home: 'Accueil' },
     search: { eyebrow: 'Recherche', title: 'Trouver la meteo par lieu', description: 'Saisissez une ville, un code postal, un point dinteret ou des coordonnees. Les suggestions apparaissent pendant la saisie.', placeholder: 'Exemple : Tokyo, 10001, Golden Gate Bridge', submit: 'Rechercher', loading: 'Chargement...', currentLocation: 'Utiliser ma position', currentLocationLoading: 'Localisation...', suggestions: 'Suggestions', city: 'Ville / village', zip: 'Code postal', coordinates: 'Coordonnees' },
     map: { eyebrow: 'Carte', title: 'Zone de localisation', fallback: 'Les details resolus apparaitront ici.', openStreetMap: 'Ouvrir la grande carte' },
-    weather: { eyebrow: 'Meteo', title: 'Conditions actuelles', now: 'Maintenant', forecast: '5 jours', customRange: 'Plage', location: 'Lieu', currentWeather: 'Meteo actuelle', usefulDetails: 'Details utiles', customEyebrow: 'Plage personnalisee', customTitle: 'Choisissez une plage de dates', startDate: 'Date de debut', endDate: 'Date de fin', checkRange: 'Verifier la plage', average: 'Moyenne', highLow: 'Max', day: 'Jour', night: 'Nuit' },
+    weather: { eyebrow: 'Meteo', title: 'Conditions actuelles', now: 'Maintenant', forecast: '5 jours', customRange: 'Plage', location: 'Lieu', currentWeather: 'Meteo actuelle', usefulDetails: 'Details utiles', customEyebrow: 'Plage personnalisee', customTitle: 'Choisissez une plage de dates', startDate: 'Date de debut', endDate: 'Date de fin', checkRange: 'Verifier la plage', checkingRange: 'Verification...', average: 'Moyenne', highLow: 'Max', day: 'Jour', night: 'Nuit' },
     auth: { eyebrow: 'Compte', signInTitle: 'Connexion', registerTitle: 'Inscription', email: 'E-mail', password: 'Mot de passe', signIn: 'Connexion', register: 'Inscription', close: 'Fermer', wait: 'Veuillez patienter...', noAccount: 'Pas de compte ?', haveAccount: 'Vous avez deja un compte ?' },
     settings: { eyebrow: 'Parametres', title: 'Options daffichage', language: 'Langue', temperature: 'Temperature', save: 'Enregistrer', close: 'Fermer', celsius: 'Celsius', fahrenheit: 'Fahrenheit' },
-    dashboard: { eyebrow: 'Espace utilisateur', title: 'Enregistrements sauvegardes', back: 'Retour a laccueil', records: 'Enregistrements', unit: 'Unite', export: 'Export', exportLabel: 'Exporter les donnees', exportTitle: 'Telecharger les enregistrements', helper: 'Aucun enregistrement pour le moment. Connectez-vous puis recherchez ou enregistrez une plage de dates.', loading: 'Chargement des enregistrements...', location: 'Lieu', dateRange: 'Plage de dates', temp: 'Temp', status: 'Statut', actions: 'Actions', edit: 'Modifier', delete: 'Supprimer', currentWeather: 'Meteo actuelle' },
+    dashboard: { eyebrow: 'Espace utilisateur', title: 'Enregistrements sauvegardes', back: 'Retour a laccueil', records: 'Enregistrements', unit: 'Unite', export: 'Export', exportLabel: 'Exporter les donnees', exportTitle: 'Telecharger les enregistrements', helper: 'Aucun enregistrement pour le moment. Connectez-vous puis recherchez ou enregistrez une plage de dates.', loading: 'Chargement des enregistrements...', location: 'Lieu', dateRange: 'Plage de dates', temp: 'Temp', actions: 'Actions', edit: 'Modifier', delete: 'Supprimer', currentWeather: 'Meteo actuelle' },
+    editRecord: { eyebrow: 'Modifier lenregistrement', title: 'Mettre a jour la meteo sauvegardee', close: 'Fermer', cancel: 'Annuler', save: 'Enregistrer', saving: 'Enregistrement...', location: 'Recherche de lieu', startDate: 'Date de debut', endDate: 'Date de fin', notes: 'Notes', helper: 'Modifiez le lieu, la plage ou les notes. Laissez les deux dates vides pour la meteo actuelle.' },
   },
   Chinese: {
-    statuses: { default: '当前显示默认地点，你可以随时切换。', searchPrompt: '请输入地点查看天气详情', settingsSaved: (language, unit) => `设置已更新：${language}，${unit}`, weatherLoaded: (location) => `正在显示 ${location} 的天气`, currentLocationLoaded: '正在显示你当前位置的天气', signedIn: (email) => `已登录：${email}`, registered: (email) => `已注册：${email}`, signedOut: '已退出登录', dashboardSignIn: '请先登录后再打开控制台', recordDeleted: '记录已删除', recordUpdated: (status) => `记录状态已更新为 ${status}`, exportDone: (format) => `已导出 ${format.toUpperCase()} 格式记录`, customRangeLoaded: (location) => `已加载 ${location} 的自定义日期范围天气` },
-    tips: { currentLocationSignIn: '登录后可保存搜索记录，并解锁自定义日期范围历史功能。', customRangeSignIn: '请先登录以解锁自定义日期范围、历史记录和导出功能。', futureRange: '历史天气只能查询今天及以前的日期。当前或未来天气请使用“Now”或“5 Day”。', blankAuth: '邮箱和密码都不能为空。' },
+    statuses: { default: '当前显示默认地点，你可以随时切换。', searchPrompt: '请输入地点查看天气详情', settingsSaved: (language, unit) => `设置已更新：${language}，${unit}`, weatherLoaded: (location) => `正在显示 ${location} 的天气`, currentLocationLoaded: '正在显示你当前位置的天气', signedIn: (email) => `已登录：${email}`, registered: (email) => `已注册：${email}`, signedOut: '已退出登录', dashboardSignIn: '请先登录后再打开控制台', recordDeleted: '记录已删除', recordUpdated: '记录已更新', exportDone: (format) => `已导出 ${format.toUpperCase()} 格式记录`, customRangeLoaded: (location) => `已加载 ${location} 的自定义日期范围天气` },
+    tips: { currentLocationSignIn: '登录后可保存搜索记录，并解锁自定义功能。', customRangeSignIn: '请先登录以使用自定义日期范围、历史记录和导出。', dateRangeRule: `请选择不超过 ${MAX_RANGE_DAYS} 天的日期范围，并确保两端日期都在今天前后 ${MAX_DISTANCE_FROM_TODAY_DAYS} 天内。`, blankAuth: '邮箱和密码都不能为空。', editDateRule: '如果要修改日期范围，请同时填写开始和结束日期；若查询当前天气，请同时留空。' },
     header: { eyebrow: '天气演示', dashboard: '控制台', settings: '设置', signIn: '登录', signOutFallback: '退出', home: '首页' },
     search: { eyebrow: '搜索', title: '按地点查询天气', description: '输入城市、邮编、地标或坐标，输入时会自动显示模糊建议。', placeholder: '例如：Tokyo, 10001, Golden Gate Bridge', submit: '查询', loading: '加载中...', currentLocation: '使用当前位置', currentLocationLoading: '定位中...', suggestions: '建议', city: '城市 / 城镇', zip: '邮编', coordinates: '坐标' },
     map: { eyebrow: '地图', title: '位置区域', fallback: '解析后的地点信息会显示在这里。', openStreetMap: '打开大地图' },
-    weather: { eyebrow: '天气', title: '当前天气', now: '当前', forecast: '5天', customRange: '自定义', location: '位置', currentWeather: '当前天气', usefulDetails: '更多信息', customEyebrow: '自定义日期', customTitle: '选择日期范围', startDate: '开始日期', endDate: '结束日期', checkRange: '查询范围', average: '平均', highLow: '最高', day: '白天', night: '夜间' },
+    weather: { eyebrow: '天气', title: '当前天气', now: '当前', forecast: '5天', customRange: '自定义', location: '位置', currentWeather: '当前天气', usefulDetails: '更多信息', customEyebrow: '自定义日期', customTitle: '选择日期范围', startDate: '开始日期', endDate: '结束日期', checkRange: '查询范围', checkingRange: '查询中...', average: '平均', highLow: '最高', day: '白天', night: '夜间' },
     auth: { eyebrow: '账号', signInTitle: '登录', registerTitle: '注册', email: '邮箱', password: '密码', signIn: '登录', register: '注册', close: '关闭', wait: '请稍候...', noAccount: '还没有账号？', haveAccount: '已经有账号？' },
     settings: { eyebrow: '设置', title: '显示选项', language: '语言', temperature: '温度', save: '保存设置', close: '关闭', celsius: '摄氏', fahrenheit: '华氏' },
-    dashboard: { eyebrow: '用户空间', title: '已保存天气记录', back: '返回首页', records: '记录数', unit: '单位', export: '导出', exportLabel: '导出数据', exportTitle: '下载保存的天气记录', helper: '当前还没有保存记录。请先登录后搜索或保存日期范围。', loading: '正在加载记录...', location: '地点', dateRange: '日期范围', temp: '温度', status: '状态', actions: '操作', edit: '编辑', delete: '删除', currentWeather: '当前天气' },
+    dashboard: { eyebrow: '用户空间', title: '已保存天气记录', back: '返回首页', records: '记录数', unit: '单位', export: '导出', exportLabel: '导出数据', exportTitle: '下载保存的天气记录', helper: '当前还没有保存记录。请先登录后搜索或保存日期范围。', loading: '正在加载记录...', location: '地点', dateRange: '日期范围', temp: '温度', actions: '操作', edit: '编辑', delete: '删除', currentWeather: '当前天气' },
+    editRecord: { eyebrow: '编辑记录', title: '更新已保存天气记录', close: '关闭', cancel: '取消', save: '保存修改', saving: '保存中...', location: '地点查询', startDate: '开始日期', endDate: '结束日期', notes: '备注', helper: '可编辑地点、日期范围和备注。若要保存当前天气，请同时留空两端日期。' },
   },
 }
 
@@ -204,6 +110,7 @@ const searchQuery = ref(DEFAULT_LOCATION_QUERY)
 const searchError = ref('')
 const showSettings = ref(false)
 const showAuthPanel = ref(false)
+const showEditRecordPanel = ref(false)
 const authMode = ref('signin')
 const temperatureUnit = ref('C')
 const language = ref('English')
@@ -214,11 +121,16 @@ const isSearching = ref(false)
 const isCurrentLocationLoading = ref(false)
 const isDashboardLoading = ref(false)
 const isAuthLoading = ref(false)
+const isEditSaving = ref(false)
+const isRangeLoading = ref(false)
 const weatherError = ref('')
 const dashboardError = ref('')
 const authError = ref('')
+const editRecordError = ref('')
 const locationSuggestions = ref([])
+const editingRecord = ref(null)
 let suggestionTimer = null
+let suppressSuggestions = false
 
 const currentWeather = reactive({
   location: DEFAULT_LOCATION_QUERY,
@@ -242,13 +154,11 @@ const customRange = reactive({ startDate: '', endDate: '' })
 
 const messages = computed(() => TRANSLATIONS[language.value] ?? TRANSLATIONS.English)
 const formattedCurrentTemp = computed(() => formatTemperature(currentWeather.temperatureC, temperatureUnit.value))
-const formattedFeelsLike = computed(() => currentWeather.feelsLikeC == null ? fallbackText('Feels like unavailable') : `${fallbackText('Feels like')} ${formatTemperature(currentWeather.feelsLikeC, temperatureUnit.value)}`)
+const formattedFeelsLike = computed(() => currentWeather.feelsLikeC == null ? 'Feels like unavailable' : `Feels like ${formatTemperature(currentWeather.feelsLikeC, temperatureUnit.value)}`)
 const formattedForecastDays = computed(() => buildForecastPresentation(forecastDays.value))
 const formattedRangeDays = computed(() => buildForecastPresentation(rangeDays.value))
 const formattedRangeSummary = computed(() => {
-  if (!rangeSummary.value) {
-    return null
-  }
+  if (!rangeSummary.value) return null
   return {
     ...rangeSummary.value,
     averageTemp: formatTemperature(rangeSummary.value.average_temp_c, temperatureUnit.value),
@@ -256,10 +166,6 @@ const formattedRangeSummary = computed(() => {
     minTemp: formatTemperature(rangeSummary.value.min_temp_c, temperatureUnit.value),
   }
 })
-
-function fallbackText(value) {
-  return value
-}
 
 function buildForecastPresentation(items) {
   return items.map((item) => ({
@@ -273,22 +179,20 @@ function buildForecastPresentation(items) {
 }
 
 function formatTemperature(value, unit) {
-  if (value == null || Number.isNaN(value)) {
-    return '--'
-  }
-  if (unit === 'F') {
-    return `${Math.round((value * 9) / 5 + 32)}°F`
-  }
+  if (value == null || Number.isNaN(value)) return '--'
+  if (unit === 'F') return `${Math.round((value * 9) / 5 + 32)}°F`
   return `${Math.round(value)}°C`
 }
 
 function formatRangeTemperature(minValue, maxValue, unit) {
   const low = formatTemperature(minValue, unit)
   const high = formatTemperature(maxValue, unit)
-  if (low === '--' && high === '--') {
-    return '--'
-  }
+  if (low === '--' && high === '--') return '--'
   return `${low} to ${high}`
+}
+
+function languageTag(languageName) {
+  return { English: 'en-US', Spanish: 'es-ES', French: 'fr-FR', Chinese: 'zh-CN' }[languageName] ?? 'en-US'
 }
 
 function formatWeekday(value) {
@@ -299,32 +203,16 @@ function formatDateLabel(value) {
   return new Date(`${value}T00:00:00`).toLocaleDateString(languageTag(language.value), { month: 'short', day: 'numeric' })
 }
 
-function languageTag(languageName) {
-  return {
-    English: 'en-US',
-    Spanish: 'es-ES',
-    French: 'fr-FR',
-    Chinese: 'zh-CN',
-  }[languageName] ?? 'en-US'
-}
-
 function weatherIcon(code) {
   return WEATHER_ICONS[code] ?? WEATHER_ICONS.unknown
 }
 
 function readStorage(key, fallback) {
-  try {
-    return window.localStorage.getItem(key) ?? fallback
-  } catch {
-    return fallback
-  }
+  try { return window.localStorage.getItem(key) ?? fallback } catch { return fallback }
 }
 
 function writeStorage(key, value) {
-  try {
-    window.localStorage.setItem(key, value)
-  } catch {
-  }
+  try { window.localStorage.setItem(key, value) } catch {}
 }
 
 function loadSettings() {
@@ -335,6 +223,10 @@ function loadSettings() {
 
 function handleGlobalKeydown(event) {
   if (event.key !== 'Escape') return
+  if (showEditRecordPanel.value) {
+    closeEditRecord()
+    return
+  }
   if (showAuthPanel.value) {
     closeAuth()
     return
@@ -368,46 +260,50 @@ async function fetchForecast(location) {
   forecastDays.value = payload.forecast_days
 }
 
+function buildDateLabel(record) {
+  if (record.start_date && record.end_date) {
+    if (record.start_date === record.end_date) return record.start_date
+    return `${record.start_date} to ${record.end_date}`
+  }
+  return messages.value.dashboard.currentWeather
+}
+
+function historyTemperature(payload) {
+  if (payload?.current?.temperature_c != null) return formatTemperature(payload.current.temperature_c, temperatureUnit.value)
+  if (payload?.range_summary?.average_temp_c != null) return `${messages.value.weather.average} ${formatTemperature(payload.range_summary.average_temp_c, temperatureUnit.value)}`
+  return '--'
+}
+
 async function fetchHistory() {
   const payload = await apiRequest('/weather/history')
   savedWeatherRecords.value = payload.records.map((record) => ({
     id: record.id,
     location: record.resolved_name,
-    startDate: record.start_date ?? messages.value.dashboard.currentWeather,
-    endDate: record.end_date ?? messages.value.dashboard.currentWeather,
+    locationQuery: record.location_query,
+    dateLabel: buildDateLabel(record),
+    startDateRaw: record.snapshot_type === 'current' ? '' : (record.start_date ?? ''),
+    endDateRaw: record.snapshot_type === 'current' ? '' : (record.end_date ?? ''),
     temperature: historyTemperature(record.weather_payload),
     status: record.status,
-    notes: record.notes,
+    notes: record.notes ?? '',
     weather_payload: record.weather_payload,
+    snapshotType: record.snapshot_type,
   }))
-}
-
-function historyTemperature(payload) {
-  if (payload?.current?.temperature_c != null) {
-    return formatTemperature(payload.current.temperature_c, temperatureUnit.value)
-  }
-  if (payload?.range_summary?.average_temp_c != null) {
-    return `${messages.value.weather.average} ${formatTemperature(payload.range_summary.average_temp_c, temperatureUnit.value)}`
-  }
-  return '--'
 }
 
 async function saveCurrentSearchRecord(locationQuery) {
   if (!isAuthenticated.value) return
-  await apiRequest('/weather/history', {
-    method: 'POST',
-    body: JSON.stringify({
-      location: locationQuery,
-      status: 'Active',
-    }),
-  })
+  await apiRequest('/weather/history', { method: 'POST', body: JSON.stringify({ location: locationQuery, status: 'Active' }) })
 }
 
 async function handleSearch(query, options = {}) {
-  const normalizedQuery = query.trim()
-  searchQuery.value = normalizedQuery
-
-  if (!normalizedQuery) {
+  const locationQuery = query.trim()
+  const displayQuery = options.displayQuery ?? locationQuery
+  suppressSuggestions = true
+  searchQuery.value = displayQuery
+  if (suggestionTimer) window.clearTimeout(suggestionTimer)
+  locationSuggestions.value = []
+  if (!locationQuery) {
     searchError.value = 'Please enter a location before searching.'
     statusText.value = messages.value.statuses.searchPrompt
     return
@@ -418,15 +314,18 @@ async function handleSearch(query, options = {}) {
   weatherError.value = ''
   rangeSummary.value = null
   rangeDays.value = []
-  activeLocationQuery.value = normalizedQuery
+  activeLocationQuery.value = locationQuery
+  locationSuggestions.value = []
 
   try {
-    await fetchCurrentWeather(normalizedQuery)
-    await fetchForecast(normalizedQuery)
+    await fetchCurrentWeather(locationQuery)
+    await fetchForecast(locationQuery)
     statusText.value = messages.value.statuses.weatherLoaded(selectedLocation.value)
     if (options.persist) {
-      await saveCurrentSearchRecord(normalizedQuery)
-      await fetchHistory()
+      await saveCurrentSearchRecord(locationQuery)
+      if (isAuthenticated.value) {
+        await fetchHistory()
+      }
     }
   } catch (error) {
     searchError.value = error.message || 'Unable to fetch weather for that location.'
@@ -441,13 +340,11 @@ async function handleCurrentLocation() {
     searchError.value = 'Your browser does not support current-location lookup.'
     return
   }
-
   isCurrentLocationLoading.value = true
   searchError.value = ''
   weatherError.value = ''
   rangeSummary.value = null
   rangeDays.value = []
-
   try {
     const position = await new Promise((resolve, reject) => {
       navigator.geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy: true, timeout: 15000 })
@@ -473,30 +370,29 @@ async function handleCurrentLocation() {
   }
 }
 
-function setActiveView(view) {
-  activeView.value = view
-}
+function setActiveView(view) { activeView.value = view }
 
-function isFutureDate(dateValue) {
+function validateRangeWindow(startDate, endDate) {
+  if (!startDate || !endDate) return 'Please choose both a start date and an end date.'
+  if (startDate > endDate) return 'Start date must be before or equal to end date.'
+  const start = new Date(`${startDate}T00:00:00`)
+  const end = new Date(`${endDate}T00:00:00`)
   const today = new Date()
   const localToday = new Date(today.getFullYear(), today.getMonth(), today.getDate())
-  return new Date(`${dateValue}T00:00:00`) > localToday
+  const durationDays = Math.round((end - start) / 86400000) + 1
+  if (durationDays > MAX_RANGE_DAYS) return messages.value.tips.dateRangeRule
+  if (Math.abs(Math.round((start - localToday) / 86400000)) > MAX_DISTANCE_FROM_TODAY_DAYS) return messages.value.tips.dateRangeRule
+  if (Math.abs(Math.round((end - localToday) / 86400000)) > MAX_DISTANCE_FROM_TODAY_DAYS) return messages.value.tips.dateRangeRule
+  return ''
 }
 
 async function handleRangeSubmit(payload) {
+  if (isRangeLoading.value) return
   customRange.startDate = payload.startDate
   customRange.endDate = payload.endDate
-
-  if (!payload.startDate || !payload.endDate) {
-    weatherError.value = 'Please choose both a start date and an end date.'
-    return
-  }
-  if (payload.startDate > payload.endDate) {
-    weatherError.value = 'Start date must be before or equal to end date.'
-    return
-  }
-  if (isFutureDate(payload.startDate) || isFutureDate(payload.endDate)) {
-    weatherError.value = messages.value.tips.futureRange
+  const validationMessage = validateRangeWindow(payload.startDate, payload.endDate)
+  if (validationMessage) {
+    weatherError.value = validationMessage
     return
   }
   if (!isAuthenticated.value) {
@@ -506,9 +402,9 @@ async function handleRangeSubmit(payload) {
   }
 
   weatherError.value = ''
-
+  isRangeLoading.value = true
   try {
-    const targetLocation = activeLocationQuery.value || searchQuery.value.trim() || DEFAULT_LOCATION_QUERY
+    const targetLocation = activeLocationQuery.value || DEFAULT_LOCATION_QUERY
     const result = await apiRequest(`/weather/range?location=${encodeURIComponent(targetLocation)}&start_date=${payload.startDate}&end_date=${payload.endDate}`)
     rangeSummary.value = result.range_summary
     rangeDays.value = result.forecast_days
@@ -517,19 +413,12 @@ async function handleRangeSubmit(payload) {
     currentWeather.latitude = result.location.latitude
     currentWeather.longitude = result.location.longitude
     statusText.value = messages.value.statuses.customRangeLoaded(selectedLocation.value)
-
-    await apiRequest('/weather/history', {
-      method: 'POST',
-      body: JSON.stringify({
-        location: targetLocation,
-        start_date: payload.startDate,
-        end_date: payload.endDate,
-        status: 'Saved',
-      }),
-    })
+    await apiRequest('/weather/history', { method: 'POST', body: JSON.stringify({ location: targetLocation, start_date: payload.startDate, end_date: payload.endDate, status: 'Saved' }) })
     await fetchHistory()
   } catch (error) {
-    weatherError.value = error.message || messages.value.tips.futureRange
+    weatherError.value = error.message || messages.value.tips.dateRangeRule
+  } finally {
+    isRangeLoading.value = false
   }
 }
 
@@ -560,15 +449,11 @@ async function submitAuth(payload) {
     authError.value = messages.value.tips.blankAuth
     return
   }
-
   isAuthLoading.value = true
   authError.value = ''
   try {
     const path = payload.mode === 'signin' ? '/auth/login' : '/auth/register'
-    const result = await apiRequest(path, {
-      method: 'POST',
-      body: JSON.stringify({ email, password }),
-    })
+    const result = await apiRequest(path, { method: 'POST', body: JSON.stringify({ email, password }) })
     authUser.value = result.user
     isAuthenticated.value = true
     showAuthPanel.value = false
@@ -583,14 +468,9 @@ async function submitAuth(payload) {
 }
 
 async function logout() {
-  try {
-    await apiRequest('/auth/logout', { method: 'POST' })
-  } finally {
-    isAuthenticated.value = false
-    authUser.value = null
-    savedWeatherRecords.value = []
-    activePage.value = 'home'
-    statusText.value = messages.value.statuses.signedOut
+  try { await apiRequest('/auth/logout', { method: 'POST' }) }
+  finally {
+    window.location.reload()
   }
 }
 
@@ -642,16 +522,49 @@ async function exportRecords(format) {
   }
 }
 
-async function updateRecord(recordId) {
+function updateRecord(recordId) {
   const target = savedWeatherRecords.value.find((item) => item.id === recordId)
   if (!target) return
-  const nextStatus = target.status === 'Active' ? 'Saved' : 'Active'
+  editingRecord.value = { ...target }
+  editRecordError.value = ''
+  showEditRecordPanel.value = true
+}
+
+function closeEditRecord() {
+  showEditRecordPanel.value = false
+  editingRecord.value = null
+  editRecordError.value = ''
+}
+
+async function saveEditedRecord(payload) {
+  if (!editingRecord.value) return
+  const hasOneDate = Boolean(payload.start_date) !== Boolean(payload.end_date)
+  if (hasOneDate) {
+    editRecordError.value = messages.value.tips.editDateRule
+    return
+  }
+  if (payload.start_date && payload.end_date) {
+    const validationMessage = validateRangeWindow(payload.start_date, payload.end_date)
+    if (validationMessage) {
+      editRecordError.value = validationMessage
+      return
+    }
+  }
+
+  isEditSaving.value = true
+  editRecordError.value = ''
   try {
-    await apiRequest(`/weather/history/${recordId}`, { method: 'PATCH', body: JSON.stringify({ status: nextStatus }) })
-    target.status = nextStatus
-    statusText.value = messages.value.statuses.recordUpdated(nextStatus)
+    await apiRequest(`/weather/history/${editingRecord.value.id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(payload),
+    })
+    await fetchHistory()
+    closeEditRecord()
+    statusText.value = messages.value.statuses.recordUpdated
   } catch (error) {
-    dashboardError.value = error.message || 'Unable to update that record.'
+    editRecordError.value = error.message || 'Unable to update that record.'
+  } finally {
+    isEditSaving.value = false
   }
 }
 
@@ -667,12 +580,19 @@ async function loadAuthState() {
 }
 
 function chooseSuggestion(suggestion) {
-  searchQuery.value = suggestion.display_label
   locationSuggestions.value = []
-  handleSearch(suggestion.display_label, { persist: true })
+  handleSearch(suggestion.name, { persist: true, displayQuery: suggestion.display_label })
+}
+
+function handleTyping() {
+  suppressSuggestions = false
 }
 
 async function fetchSuggestions(query) {
+  if (suppressSuggestions) {
+    locationSuggestions.value = []
+    return
+  }
   const trimmed = query.trim()
   if (trimmed.length < 2) {
     locationSuggestions.value = []
@@ -687,12 +607,12 @@ async function fetchSuggestions(query) {
 }
 
 watch(searchQuery, (value) => {
-  if (suggestionTimer) {
-    window.clearTimeout(suggestionTimer)
+  if (suggestionTimer) window.clearTimeout(suggestionTimer)
+  if (suppressSuggestions) {
+    locationSuggestions.value = []
+    return
   }
-  suggestionTimer = window.setTimeout(() => {
-    fetchSuggestions(value)
-  }, 250)
+  suggestionTimer = window.setTimeout(() => { fetchSuggestions(value) }, 250)
 })
 
 watch(temperatureUnit, () => {
@@ -711,14 +631,12 @@ onMounted(async () => {
   document.documentElement.lang = languageTag(language.value)
   window.addEventListener('keydown', handleGlobalKeydown)
   await loadAuthState()
-  await handleSearch(DEFAULT_LOCATION_QUERY, { persist: false })
+  await handleSearch(DEFAULT_LOCATION_QUERY, { persist: false, displayQuery: DEFAULT_LOCATION_QUERY })
 })
 
 onBeforeUnmount(() => {
   window.removeEventListener('keydown', handleGlobalKeydown)
-  if (suggestionTimer) {
-    window.clearTimeout(suggestionTimer)
-  }
+  if (suggestionTimer) window.clearTimeout(suggestionTimer)
 })
 </script>
 
@@ -748,6 +666,7 @@ onBeforeUnmount(() => {
           :suggestions="locationSuggestions"
           :labels="messages.search"
           @search="(value) => handleSearch(value, { persist: true })"
+          @typing="handleTyping"
           @use-current-location="handleCurrentLocation"
           @select-suggestion="chooseSuggestion"
         />
@@ -774,6 +693,7 @@ onBeforeUnmount(() => {
         :feels-like-text="formattedFeelsLike"
         :error-message="weatherError"
         :labels="messages.weather"
+        :range-loading="isRangeLoading"
         @change-view="setActiveView"
         @submit-range="handleRangeSubmit"
       />
@@ -811,6 +731,16 @@ onBeforeUnmount(() => {
       @switch-mode="switchAuthMode"
       @submit="submitAuth"
     />
+
+    <EditRecordPanel
+      v-if="showEditRecordPanel && editingRecord"
+      :record="editingRecord"
+      :labels="messages.editRecord"
+      :loading="isEditSaving"
+      :error-message="editRecordError"
+      @close="closeEditRecord"
+      @save="saveEditedRecord"
+    />
   </div>
 </template>
 
@@ -822,7 +752,7 @@ onBeforeUnmount(() => {
   background: #f5f8f4;
   color: #17311f;
 }
-:global(button), :global(input), :global(select) { font: inherit; }
+:global(button), :global(input), :global(select), :global(textarea) { font: inherit; }
 .page-shell {
   width: min(1180px, calc(100% - 32px));
   margin: 24px auto 40px;

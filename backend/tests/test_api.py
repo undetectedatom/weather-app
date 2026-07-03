@@ -123,6 +123,15 @@ def test_history_crud_and_export():
     export_response = client.get('/api/weather/export', params={'format': 'csv'}, cookies=cookies)
     assert export_response.status_code == 200
     assert export_response.headers['content-type'].startswith('text/csv')
+    assert 'range_average_temp_c' in export_response.text
+    assert 'forecast_days_json' in export_response.text
+    assert 'Clear sky' in export_response.text
+
+    json_export_response = client.get('/api/weather/export', params={'format': 'json'}, cookies=cookies)
+    assert json_export_response.status_code == 200
+    exported_records = json_export_response.json()
+    assert exported_records[0]['range_average_temp_c'] == 20.5
+    assert exported_records[0]['forecast_days'][0]['condition'] == 'Clear sky'
 
     delete_response = client.delete(f'/api/weather/history/{record_id}', cookies=cookies)
     assert delete_response.status_code == 200

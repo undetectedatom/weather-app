@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from statistics import mean
 
 import httpx
@@ -26,6 +26,8 @@ WEATHER_CODES = {
     80: ("Rain showers", "showers"),
     95: ("Thunderstorm", "storm"),
 }
+MAX_RANGE_DAYS = 14
+MAX_DISTANCE_FROM_TODAY_DAYS = 14
 
 
 class WeatherServiceError(Exception):
@@ -61,24 +63,31 @@ class WeatherService:
         location = await location_service.resolve(query)
         payload = await self._fetch_forecast(location.latitude, location.longitude, forecast_days=days)
         daily = payload.get("daily") or {}
-        return WeatherResponse(
-            location=location,
-            current=None,
-            forecast_days=self._build_forecast_days(daily),
-        )
+        return WeatherResponse(location=location, current=None, forecast_days=self._build_forecast_days(daily))
 
     async def get_range_weather(self, query: str, start_date_raw: str, end_date_raw: str) -> WeatherResponse:
         start_date, end_date = self._validate_range(start_date_raw, end_date_raw)
         location = await location_service.resolve(query)
         today = datetime.now(timezone.utc).date()
-        if start_date > today or end_date > today:
-            raise WeatherServiceError("Future date ranges are not supported by the selected provider", code="INVALID_DATE_RANGE", status_code=400)
+        merged_daily = self._empty_daily()
 
-        payload = await self._fetch_archive(location.latitude, location.longitude, start_date.isoformat(), end_date.isoformat())
-        daily = payload.get("daily") or {}
-        forecast_days = self._build_forecast_days(daily)
-        max_values = daily.get("temperature_2m_max") or []
-        min_values = daily.get("temperature_2m_min") or []
+        if end_date < today:
+            archive_payload = await self._fetch_archive(location.latitude, location.longitude, start_date.isoformat(), end_date.isoformat())
+            merged_daily = self._merge_daily(merged_daily, archive_payload.get("daily") or {})
+        elif start_date >= today:
+            forecast_daily = await self._fetch_forecast_range(location.latitude, location.longitude, start_date, end_date)
+            merged_daily = self._merge_daily(merged_daily, forecast_daily)
+        else:
+            yesterday = today - timedelta(days=1)
+            if start_date <= yesterday:
+                archive_payload = await self._fetch_archive(location.latitude, location.longitude, start_date.isoformat(), yesterday.isoformat())
+                merged_daily = self._merge_daily(merged_daily, archive_payload.get("daily") or {})
+            forecast_daily = await self._fetch_forecast_range(location.latitude, location.longitude, today, end_date)
+            merged_daily = self._merge_daily(merged_daily, forecast_daily)
+
+        forecast_days = self._build_forecast_days(merged_daily)
+        max_values = merged_daily.get("temperature_2m_max") or []
+        min_values = merged_daily.get("temperature_2m_min") or []
         avg_values = [(high + low) / 2 for high, low in zip(max_values, min_values)]
         return WeatherResponse(
             location=location,
@@ -103,6 +112,13 @@ class WeatherService:
             "forecast_days": forecast_days,
         }
         return await self._request(f"{settings.weather_base_url}/forecast", params)
+
+    async def _fetch_forecast_range(self, lat: float, lon: float, start_date: date, end_date: date) -> dict:
+        today = datetime.now(timezone.utc).date()
+        forecast_window = (end_date - today).days + 1
+        payload = await self._fetch_forecast(lat, lon, forecast_days=max(1, forecast_window))
+        daily = payload.get("daily") or {}
+        return self._slice_daily(daily, start_date, end_date)
 
     async def _fetch_archive(self, lat: float, lon: float, start_date: str, end_date: str) -> dict:
         params = {
@@ -141,6 +157,34 @@ class WeatherService:
             ))
         return items
 
+    def _slice_daily(self, daily: dict, start_date: date, end_date: date) -> dict:
+        filtered = self._empty_daily()
+        for index, weather_date in enumerate(daily.get("time") or []):
+            current_date = date.fromisoformat(weather_date)
+            if start_date <= current_date <= end_date:
+                filtered["time"].append(weather_date)
+                filtered["weather_code"].append((daily.get("weather_code") or [None])[index])
+                filtered["temperature_2m_max"].append((daily.get("temperature_2m_max") or [None])[index])
+                filtered["temperature_2m_min"].append((daily.get("temperature_2m_min") or [None])[index])
+        if not filtered["time"]:
+            raise WeatherServiceError(
+                f"Choose a date range of {MAX_RANGE_DAYS} days or fewer, and keep both dates within {MAX_DISTANCE_FROM_TODAY_DAYS} days of today.",
+                code="INVALID_DATE_RANGE",
+                status_code=400,
+            )
+        return filtered
+
+    def _merge_daily(self, left: dict, right: dict) -> dict:
+        return {
+            "time": [*(left.get("time") or []), *(right.get("time") or [])],
+            "weather_code": [*(left.get("weather_code") or []), *(right.get("weather_code") or [])],
+            "temperature_2m_max": [*(left.get("temperature_2m_max") or []), *(right.get("temperature_2m_max") or [])],
+            "temperature_2m_min": [*(left.get("temperature_2m_min") or []), *(right.get("temperature_2m_min") or [])],
+        }
+
+    def _empty_daily(self) -> dict:
+        return {"time": [], "weather_code": [], "temperature_2m_max": [], "temperature_2m_min": []}
+
     def _condition(self, code: int | None) -> tuple[str, str]:
         return WEATHER_CODES.get(code, ("Unknown", "unknown"))
 
@@ -152,6 +196,20 @@ class WeatherService:
             raise WeatherServiceError("Dates must use YYYY-MM-DD format", code="INVALID_DATE_RANGE", status_code=400) from exc
         if start_date > end_date:
             raise WeatherServiceError("Start date must be before or equal to end date", code="INVALID_DATE_RANGE", status_code=400)
+        duration_days = (end_date - start_date).days + 1
+        if duration_days > MAX_RANGE_DAYS:
+            raise WeatherServiceError(
+                f"Choose a date range of {MAX_RANGE_DAYS} days or fewer, and keep both dates within {MAX_DISTANCE_FROM_TODAY_DAYS} days of today.",
+                code="INVALID_DATE_RANGE",
+                status_code=400,
+            )
+        today = datetime.now(timezone.utc).date()
+        if abs((start_date - today).days) > MAX_DISTANCE_FROM_TODAY_DAYS or abs((end_date - today).days) > MAX_DISTANCE_FROM_TODAY_DAYS:
+            raise WeatherServiceError(
+                f"Choose a date range of {MAX_RANGE_DAYS} days or fewer, and keep both dates within {MAX_DISTANCE_FROM_TODAY_DAYS} days of today.",
+                code="INVALID_DATE_RANGE",
+                status_code=400,
+            )
         return start_date, end_date
 
 

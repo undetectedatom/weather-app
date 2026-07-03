@@ -32,9 +32,9 @@
     <section v-else-if="activeView === 'customRange'" class="custom-range-card">
       <div class="section-heading"><p class="eyebrow">{{ labels.customEyebrow }}</p><h2>{{ labels.customTitle }}</h2></div>
       <form class="range-form" @submit.prevent="submitRange">
-        <label><span>{{ labels.startDate }}</span><input v-model="startDate" type="date" /></label>
-        <label><span>{{ labels.endDate }}</span><input v-model="endDate" type="date" /></label>
-        <button type="submit">{{ labels.checkRange }}</button>
+        <label><span>{{ labels.startDate }}</span><input v-model="startDate" type="date" :disabled="rangeLoading" /></label>
+        <label><span>{{ labels.endDate }}</span><input v-model="endDate" type="date" :disabled="rangeLoading" /></label>
+        <button type="submit" :disabled="rangeLoading">{{ rangeLoading ? labels.checkingRange : labels.checkRange }}</button>
       </form>
       <div v-if="rangeSummary" class="range-summary-card">
         <strong>{{ rangeSummary.start_date }} to {{ rangeSummary.end_date }}</strong>
@@ -80,7 +80,7 @@
 
 <script setup>
 import { ref, watch } from 'vue'
-const props = defineProps({ activeView: { type: String, required: true }, selectedLocation: { type: String, required: true }, currentWeather: { type: Object, required: true }, forecastDays: { type: Array, required: true }, customRange: { type: Object, required: true }, rangeDays: { type: Array, default: () => [] }, rangeSummary: { type: Object, default: null }, currentTemperature: { type: String, required: true }, feelsLikeText: { type: String, required: true }, errorMessage: { type: String, default: '' }, labels: { type: Object, required: true } })
+const props = defineProps({ activeView: { type: String, required: true }, selectedLocation: { type: String, required: true }, currentWeather: { type: Object, required: true }, forecastDays: { type: Array, required: true }, customRange: { type: Object, required: true }, rangeDays: { type: Array, default: () => [] }, rangeSummary: { type: Object, default: null }, currentTemperature: { type: String, required: true }, feelsLikeText: { type: String, required: true }, errorMessage: { type: String, default: '' }, labels: { type: Object, required: true }, rangeLoading: { type: Boolean, default: false } })
 const emit = defineEmits(['change-view', 'submit-range'])
 const startDate = ref(props.customRange.startDate)
 const endDate = ref(props.customRange.endDate)
@@ -113,6 +113,7 @@ h2, p { margin: 0; }
 .range-form label { display: grid; gap: 6px; }
 .range-form input, .range-form button { border: 1px solid #cfd8cf; border-radius: 12px; padding: 12px 14px; }
 .range-form button { cursor: pointer; background: #2f7d4b; border-color: #7ab48a; color: #fff; }
+.range-form button:disabled, .range-form input:disabled { cursor: wait; opacity: 0.72; }
 .forecast-list { display: grid; gap: 12px; }
 .forecast-card details { display: grid; gap: 14px; }
 .forecast-card summary { list-style: none; cursor: pointer; }
