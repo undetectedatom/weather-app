@@ -56,13 +56,31 @@ h1 { font-size: 1.4rem; }
     margin-left: 0;
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 8px;
+    gap: 6px;
     justify-content: stretch;
+    padding: 6px;
+    border-radius: 14px;
+    background: #f5faf6;
+    border: 1px solid #dbe4dc;
   }
   .header-right button {
     width: 100%;
     max-width: none;
-    padding: 9px 12px;
+    min-height: 38px;
+    padding: 8px 10px;
+    font-size: 0.92rem;
+    border-radius: 10px;
+  }
+  .ghost-button {
+    background: rgba(255, 255, 255, 0.88);
+  }
+  .primary-button {
+    box-shadow: none;
+  }
+}
+@media (max-width: 360px) {
+  .header-right {
+    grid-template-columns: 1fr;
   }
 }
 </style>

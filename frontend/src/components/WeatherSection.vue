@@ -60,22 +60,18 @@
             <p>{{ labels.highLow }} {{ rangeSummary.maxTemp }} / Low {{ rangeSummary.minTemp }}</p>
           </div>
         </div>
-        <section v-if="showRangeTrend" class="trend-card">
+        <section v-if="showRangeTrend" class="trend-card range-trend-card">
           <div class="trend-header">
             <p class="eyebrow">{{ labels.trend }}</p>
             <p>{{ labels.average }}</p>
           </div>
-          <svg viewBox="0 0 100 44" class="trend-chart" preserveAspectRatio="none" aria-hidden="true">
-            <defs>
-              <linearGradient id="rangeTrendFill" x1="0%" y1="0%" x2="0%" y2="100%">
-                <stop offset="0%" stop-color="#2f7d4b" stop-opacity="0.28" />
-                <stop offset="100%" stop-color="#2f7d4b" stop-opacity="0.02" />
-              </linearGradient>
-            </defs>
-            <path class="trend-area" :d="rangeTrendAreaPath" />
-            <path class="trend-line" :d="rangeTrendPath" />
-            <circle v-for="point in rangeTrendDots" :key="point.key" class="trend-dot" :cx="point.x" :cy="point.y" r="1.6" />
-          </svg>
+          <TrendChart
+            :labels="rangeChartLabels"
+            :values="rangeChartValues"
+            line-color="#2f7d4b"
+            fill-top="rgba(47, 125, 75, 0.26)"
+            fill-bottom="rgba(47, 125, 75, 0.02)"
+          />
           <div class="trend-labels">
             <span>{{ rangeDays[0]?.dateLabel }}</span>
             <span>{{ rangeDays[rangeDays.length - 1]?.dateLabel }}</span>
@@ -87,13 +83,13 @@
               <summary>
                 <div class="forecast-summary">
                   <div class="forecast-day">
+                    <span class="forecast-icon">{{ item.icon }}</span>
                     <div><strong>{{ item.day }}</strong><p>{{ item.dateLabel }}</p></div>
                   </div>
                   <div class="forecast-meta">
                     <span class="forecast-condition">{{ item.condition }}</span>
                     <span class="forecast-temp">{{ item.temp }}</span>
                     <span class="forecast-average">{{ labels.average }} {{ item.averageTempLabel }}</span>
-                    <span class="forecast-icon">{{ item.icon }}</span>
                   </div>
                 </div>
               </summary>
@@ -114,22 +110,18 @@
           <h3>{{ labels.title }}</h3>
         </div>
       </div>
-      <section class="trend-card">
+      <section v-if="showForecastTrend" class="trend-card forecast-trend-card">
         <div class="trend-header">
           <p class="eyebrow">{{ labels.trend }}</p>
           <p>{{ labels.average }}</p>
         </div>
-        <svg viewBox="0 0 100 44" class="trend-chart" preserveAspectRatio="none" aria-hidden="true">
-          <defs>
-            <linearGradient id="forecastTrendFill" x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stop-color="#d27b2c" stop-opacity="0.28" />
-              <stop offset="100%" stop-color="#d27b2c" stop-opacity="0.02" />
-            </linearGradient>
-          </defs>
-          <path class="trend-area forecast-trend-area" :d="forecastTrendAreaPath" />
-          <path class="trend-line forecast-trend-line" :d="forecastTrendPath" />
-          <circle v-for="point in forecastTrendDots" :key="point.key" class="trend-dot forecast-trend-dot" :cx="point.x" :cy="point.y" r="1.6" />
-        </svg>
+        <TrendChart
+          :labels="forecastChartLabels"
+          :values="forecastChartValues"
+          line-color="#d27b2c"
+          fill-top="rgba(210, 123, 44, 0.24)"
+          fill-bottom="rgba(210, 123, 44, 0.02)"
+        />
         <div class="trend-labels">
           <span>{{ forecastDays[0]?.dateLabel }}</span>
           <span>{{ forecastDays[forecastDays.length - 1]?.dateLabel }}</span>
@@ -141,13 +133,13 @@
             <summary>
               <div class="forecast-summary">
                 <div class="forecast-day">
+                  <span class="forecast-icon">{{ item.icon }}</span>
                   <div><strong>{{ item.day }}</strong><p>{{ item.dateLabel }}</p></div>
                 </div>
                 <div class="forecast-meta">
                   <span class="forecast-condition">{{ item.condition }}</span>
                   <span class="forecast-temp">{{ item.temp }}</span>
                   <span class="forecast-average">{{ labels.average }} {{ item.averageTempLabel }}</span>
-                  <span class="forecast-icon">{{ item.icon }}</span>
                 </div>
               </div>
             </summary>
@@ -163,6 +155,7 @@
 </template>
 
 <script setup>
+import TrendChart from './TrendChart.vue'
 import { computed, ref, watch } from 'vue'
 
 const props = defineProps({
@@ -188,31 +181,15 @@ const endDate = ref(props.customRange.endDate)
 watch(() => props.customRange.startDate, (value) => { startDate.value = value })
 watch(() => props.customRange.endDate, (value) => { endDate.value = value })
 
-const showRangeTrend = computed(() => props.rangeDays.length > 5)
-const rangeTrend = computed(() => buildTrendGeometry(props.rangeDays))
-const forecastTrend = computed(() => buildTrendGeometry(props.forecastDays))
-const rangeTrendPath = computed(() => rangeTrend.value.linePath)
-const rangeTrendAreaPath = computed(() => rangeTrend.value.areaPath)
-const rangeTrendDots = computed(() => rangeTrend.value.dots)
-const forecastTrendPath = computed(() => forecastTrend.value.linePath)
-const forecastTrendAreaPath = computed(() => forecastTrend.value.areaPath)
-const forecastTrendDots = computed(() => forecastTrend.value.dots)
+const showRangeTrend = computed(() => props.rangeDays.length >= 2)
+const showForecastTrend = computed(() => props.forecastDays.length >= 2)
+const rangeChartLabels = computed(() => props.rangeDays.map((item) => item.dateLabel))
+const forecastChartLabels = computed(() => props.forecastDays.map((item) => item.dateLabel))
+const rangeChartValues = computed(() => sanitizeTrendValues(props.rangeDays))
+const forecastChartValues = computed(() => sanitizeTrendValues(props.forecastDays))
 
-function buildTrendGeometry(items) {
-  const values = items.map((item) => item.averageTempValue).filter((value) => value != null)
-  if (!values.length) return { linePath: '', areaPath: '', dots: [] }
-  const min = Math.min(...values)
-  const max = Math.max(...values)
-  const spread = max - min || 1
-  const dots = items.map((item, index) => {
-    const value = item.averageTempValue ?? min
-    const x = items.length === 1 ? 50 : (index / (items.length - 1)) * 100
-    const y = 34 - (((value - min) / spread) * 26)
-    return { key: `${item.date}-${index}`, x, y }
-  })
-  const linePath = dots.map((point, index) => `${index === 0 ? 'M' : 'L'} ${point.x} ${point.y}`).join(' ')
-  const areaPath = `${linePath} L ${dots[dots.length - 1].x} 40 L ${dots[0].x} 40 Z`
-  return { linePath, areaPath, dots }
+function sanitizeTrendValues(items) {
+  return items.map((item) => item.averageTempValue ?? null)
 }
 
 function submitRange() {
@@ -233,7 +210,7 @@ h2, h3, p { margin: 0; }
 .time-selection .active { background: #edf5ef; border-color: #7ab48a; color: #2f7d4b; }
 .summary-grid { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr); gap: 14px; }
 .info-card, .forecast-card, .custom-range-card, .range-summary-card, .trend-card { border-radius: 14px; border: 1px solid #cfd8cf; background: white; padding: 16px; }
-.highlight-card, .range-summary-card, .trend-card { background: #f5faf6; }
+.highlight-card, .range-summary-card { background: #f5faf6; }
 .info-header { font-size: 0.9rem; color: #6f8174; margin-bottom: 10px; }
 .info-content { display: grid; gap: 8px; }
 .current-card { min-height: 100%; }
@@ -256,22 +233,17 @@ h2, h3, p { margin: 0; }
 .range-form input, .range-form button { border: 1px solid #cfd8cf; border-radius: 12px; padding: 12px 14px; }
 .range-form button { cursor: pointer; background: #2f7d4b; border-color: #7ab48a; color: #fff; }
 .range-form button:disabled, .range-form input:disabled { cursor: wait; opacity: 0.72; }
-.trend-card { display: grid; gap: 10px; }
+.trend-card { display: grid; gap: 10px; padding: 18px; }
+.range-trend-card { background: linear-gradient(180deg, #f5faf6 0%, #ffffff 100%); }
+.forecast-trend-card { background: linear-gradient(180deg, #fff7ef 0%, #ffffff 100%); }
 .trend-header { display: flex; justify-content: space-between; gap: 12px; color: #4f6754; }
-.trend-chart { width: 100%; height: 140px; display: block; overflow: visible; }
-.trend-area { fill: url(#rangeTrendFill); }
-.forecast-trend-area { fill: url(#forecastTrendFill); }
-.trend-line { fill: none; stroke: #2f7d4b; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
-.forecast-trend-line { stroke: #d27b2c; }
-.trend-dot { fill: #2f7d4b; stroke: #ffffff; stroke-width: 0.8; }
-.forecast-trend-dot { fill: #d27b2c; }
 .trend-labels { display: flex; justify-content: space-between; color: #567061; font-size: 0.92rem; }
 .forecast-list { display: grid; gap: 12px; }
 .forecast-card details { display: grid; gap: 14px; }
 .forecast-card summary { list-style: none; cursor: pointer; }
 .forecast-card summary::-webkit-details-marker { display: none; }
 .forecast-summary { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
-.forecast-day { display: grid; grid-template-columns: 1fr; align-items: center; gap: 12px; }
+.forecast-day { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 12px; }
 .forecast-icon { font-size: 1.8rem; line-height: 1; align-self: center; }
 .forecast-meta { display: grid; gap: 4px; justify-items: end; text-align: right; }
 .forecast-condition { color: #4f6754; }
@@ -283,5 +255,9 @@ h2, h3, p { margin: 0; }
   .summary-grid, .range-form, .forecast-detail-grid, .section-heading-row { grid-template-columns: 1fr; }
   .details-grid { grid-template-columns: 1fr; }
   .weather-list-header { flex-direction: column; }
+}
+@media (max-width: 640px) {
+  .forecast-summary { align-items: start; }
+  .forecast-meta { justify-items: start; text-align: left; }
 }
 </style>
