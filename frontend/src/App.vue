@@ -9,11 +9,13 @@ import AuthPanel from './components/AuthPanel.vue'
 import DashboardPanel from './components/DashboardPanel.vue'
 import EditRecordPanel from './components/EditRecordPanel.vue'
 import ConfirmDialog from './components/ConfirmDialog.vue'
+import ProjectInfoPanel from './components/ProjectInfoPanel.vue'
 import { apiDownload, apiRequest } from './api'
 
 const DEFAULT_LOCATION_QUERY = 'San Francisco'
 const MAX_RANGE_DAYS = 14
 const MAX_DISTANCE_FROM_TODAY_DAYS = 14
+const PROJECT_CREATOR_NAME = 'undetectedatom'
 const STORAGE_KEYS = {
   language: 'weather-app.language',
   temperatureUnit: 'weather-app.temperature-unit',
@@ -775,6 +777,8 @@ onBeforeUnmount(() => {
       @delete-record="removeRecord"
       @export-records="exportRecords"
     />
+
+    <ProjectInfoPanel :creator-name="PROJECT_CREATOR_NAME" />
 
     <SettingsPanel
       v-if="showSettings"
