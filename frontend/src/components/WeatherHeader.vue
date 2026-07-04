@@ -9,10 +9,10 @@
     </div>
     <div class="header-right">
       <button class="ghost-button" type="button">{{ temperatureUnit }}°</button>
-      <button class="primary-button" type="button" @click="$emit('home')">{{ labels.home }}</button>
-      <button class="primary-button" type="button" @click="$emit('open-dashboard')">{{ labels.dashboard }}</button>
-      <button class="primary-button" type="button" @click="$emit('open-settings')">{{ labels.settings }}</button>
-      <button v-if="!isAuthenticated" class="primary-button" type="button" @click="$emit('open-auth')">{{ labels.signIn }}</button>
+      <button :class="['ghost-button', { active: activePage === 'home' }]" type="button" @click="$emit('home')">{{ labels.home }}</button>
+      <button :class="['ghost-button', { active: activePage === 'dashboard' }]" type="button" @click="$emit('open-dashboard')">{{ labels.dashboard }}</button>
+      <button class="ghost-button" type="button" @click="$emit('open-settings')">{{ labels.settings }}</button>
+      <button v-if="!isAuthenticated" class="ghost-button" type="button" @click="$emit('open-auth')">{{ labels.signIn }}</button>
       <button v-else class="ghost-button" type="button">{{ userEmail || labels.signedInFallback }}</button>
       <button v-if="isAuthenticated" class="ghost-button" type="button" @click="$emit('request-logout')">{{ labels.signOut }}</button>
     </div>
@@ -25,6 +25,7 @@ import brandLogo from '../assets/brand/logo.png'
 defineProps({
   selectedLocation: { type: String, required: true },
   temperatureUnit: { type: String, required: true },
+  activePage: { type: String, required: true },
   isAuthenticated: { type: Boolean, default: false },
   userEmail: { type: String, default: '' },
   labels: { type: Object, required: true },
@@ -41,12 +42,30 @@ defineEmits(['open-settings', 'open-auth', 'open-dashboard', 'home', 'request-lo
 h1, p { margin: 0; }
 h1 { font-size: 1.4rem; }
 .header-right { margin-left: auto; display: flex; flex-wrap: wrap; gap: 10px; justify-content: flex-end; align-items: center; }
-.ghost-button, .primary-button { border-radius: 12px; padding: 10px 14px; cursor: pointer; border: 1px solid #cfd8cf; background: #ffffff; color: #23402e; max-width: 11rem; min-height: 42px; }
-.primary-button { border-color: #7ab48a; background: #2f7d4b; color: white; }
+.ghost-button {
+  border-radius: 12px;
+  padding: 10px 14px;
+  cursor: pointer;
+  border: 1px solid #cfd8cf;
+  background: transparent;
+  color: #23402e;
+  max-width: 11rem;
+  min-height: 42px;
+  transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease;
+}
+.ghost-button:hover {
+  background: rgba(47, 125, 75, 0.08);
+  border-color: #9cba9d;
+}
+.ghost-button.active {
+  background: #2f7d4b;
+  border-color: #2f7d4b;
+  color: #ffffff;
+}
 @media (max-width: 640px) {
   .header { align-items: start; }
   .header-right { gap: 8px; }
-  .ghost-button, .primary-button { max-width: min(100%, 13rem); }
+  .ghost-button { max-width: min(100%, 13rem); }
 }
 @media (max-width: 430px) {
   .header { flex-direction: column; align-items: stretch; gap: 14px; padding: 16px; }
@@ -69,12 +88,6 @@ h1 { font-size: 1.4rem; }
     padding: 8px 10px;
     font-size: 0.92rem;
     border-radius: 10px;
-  }
-  .ghost-button {
-    background: rgba(255, 255, 255, 0.88);
-  }
-  .primary-button {
-    box-shadow: none;
   }
 }
 @media (max-width: 360px) {

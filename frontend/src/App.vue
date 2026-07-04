@@ -751,6 +751,7 @@ onBeforeUnmount(() => {
     <WeatherHeader
       :selected-location="selectedLocation"
       :temperature-unit="temperatureUnit"
+      :active-page="activePage"
       :is-authenticated="isAuthenticated"
       :user-email="authUser?.email ?? ''"
       :labels="messages.header"
