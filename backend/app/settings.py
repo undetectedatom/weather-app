@@ -24,6 +24,7 @@ class Settings(BaseSettings):
     osm_geocoding_base_url: str = Field(default="https://nominatim.openstreetmap.org", alias="OSM_GEOCODING_BASE_URL")
     forecast_days: int = Field(default=5, alias="FORECAST_DAYS_DEFAULT")
     recent_locations_limit: int = Field(default=5, alias="RECENT_LOCATIONS_LIMIT")
+    upstream_timeout_seconds: float = Field(default=8.0, alias="UPSTREAM_TIMEOUT_SECONDS")
 
 
 @lru_cache

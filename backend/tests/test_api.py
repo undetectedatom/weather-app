@@ -63,6 +63,20 @@ async def fake_forecast(query: str, days: int):
     return WeatherResponse(location=location, forecast_days=forecast)
 
 
+async def fake_overview(query: str, days: int):
+    location = await fake_resolve(query)
+    forecast = [ForecastDay(date=f'2026-07-0{i+1}', temp_max_c=25 + i, temp_min_c=16 + i, condition='Clear sky', icon_code='clear') for i in range(days)]
+    current = CurrentWeather(temperature_c=21.5, feels_like_c=21.0, condition='Clear sky', humidity=61, wind_speed=10, temp_max_c=24, temp_min_c=16, icon_code='clear')
+    return WeatherResponse(location=location, current=current, forecast_days=forecast)
+
+
+async def fake_overview_by_coordinates(lat: float, lon: float, days: int, resolved_location=None):
+    location = resolved_location or await fake_reverse(lat, lon)
+    forecast = [ForecastDay(date=f'2026-07-0{i+1}', temp_max_c=22 + i, temp_min_c=14 + i, condition='Partly cloudy', icon_code='partly-cloudy') for i in range(days)]
+    current = CurrentWeather(temperature_c=19.0, feels_like_c=18.5, condition='Partly cloudy', humidity=55, wind_speed=8, temp_max_c=22, temp_min_c=14, icon_code='partly-cloudy')
+    return WeatherResponse(location=location, current=current, forecast_days=forecast)
+
+
 async def fake_range(query: str, start_date: str, end_date: str):
     location = await fake_resolve(query)
     forecast = [ForecastDay(date=start_date, temp_max_c=25, temp_min_c=16, condition='Clear sky', icon_code='clear')]
@@ -76,6 +90,8 @@ location_service.reverse_name = fake_reverse_name
 weather_service.get_current_weather = fake_current_weather
 weather_service.get_current_weather_by_coordinates = fake_current_by_coordinates
 weather_service.get_forecast = fake_forecast
+weather_service.get_weather_overview = fake_overview
+weather_service.get_weather_overview_by_coordinates = fake_overview_by_coordinates
 weather_service.get_range_weather = fake_range
 
 
@@ -115,6 +131,13 @@ def test_reverse_location_name():
 def test_forecast_endpoint():
     response = client.get('/api/weather/forecast', params={'location': 'San Francisco', 'days': 5})
     assert response.status_code == 200
+    assert len(response.json()['forecast_days']) == 5
+
+
+def test_overview_endpoint():
+    response = client.get('/api/weather/overview', params={'location': 'San Francisco', 'days': 5})
+    assert response.status_code == 200
+    assert response.json()['current']['condition'] == 'Clear sky'
     assert len(response.json()['forecast_days']) == 5
 
 

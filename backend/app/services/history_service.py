@@ -23,7 +23,7 @@ class HistoryError(Exception):
 class HistoryService:
     async def create_record(self, session: Session, user: User, payload: HistoryCreate) -> HistoryPublic:
         request_start, request_end, snapshot_type, stored_start, stored_end = self._normalize_request_dates(payload.start_date, payload.end_date)
-        weather = await self._fetch_weather(payload.location, request_start, request_end)
+        weather = payload.weather_payload or await self._fetch_weather(payload.location, request_start, request_end)
         record = WeatherHistory(
             user_id=user.id,
             location_query=payload.location,

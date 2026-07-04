@@ -31,6 +31,22 @@ async def get_forecast(location: str, days: int = Query(default=5, ge=1, le=10))
         raise HTTPException(status_code=exc.status_code if hasattr(exc, 'status_code') else 400, detail={"code": exc.code, "message": str(exc), "details": None}) from exc
 
 
+@router.get("/overview", response_model=WeatherResponse)
+async def get_weather_overview(location: str, days: int = Query(default=5, ge=1, le=10)) -> WeatherResponse:
+    try:
+        return await weather_service.get_weather_overview(location, days)
+    except (LocationLookupError, WeatherServiceError) as exc:
+        raise HTTPException(status_code=exc.status_code if hasattr(exc, 'status_code') else 400, detail={"code": exc.code, "message": str(exc), "details": None}) from exc
+
+
+@router.get("/overview-location", response_model=WeatherResponse)
+async def get_weather_overview_for_coordinates(lat: float = Query(...), lon: float = Query(...), days: int = Query(default=5, ge=1, le=10)) -> WeatherResponse:
+    try:
+        return await weather_service.get_weather_overview_by_coordinates(lat, lon, days)
+    except (LocationLookupError, WeatherServiceError) as exc:
+        raise HTTPException(status_code=exc.status_code if hasattr(exc, 'status_code') else 400, detail={"code": exc.code, "message": str(exc), "details": None}) from exc
+
+
 @router.get("/range", response_model=WeatherResponse)
 async def get_range_weather(location: str, start_date: str, end_date: str) -> WeatherResponse:
     try:

@@ -25,7 +25,7 @@ class LocationService:
             return [LocationResult(name=f"{lat}, {lon}", latitude=lat, longitude=lon, display_label=f"{lat}, {lon}")]
 
         variants = self._query_variants(query)
-        async with httpx.AsyncClient(timeout=20.0) as client:
+        async with httpx.AsyncClient(timeout=settings.upstream_timeout_seconds) as client:
             for variant in variants:
                 response = await client.get(
                     f"{settings.geocoding_base_url}/search",
@@ -56,7 +56,7 @@ class LocationService:
         if not (-90 <= lat <= 90 and -180 <= lon <= 180):
             raise LocationLookupError("Coordinates are out of range", code="INVALID_COORDINATES")
 
-        async with httpx.AsyncClient(timeout=20.0) as client:
+        async with httpx.AsyncClient(timeout=settings.upstream_timeout_seconds) as client:
             try:
                 response = await client.get(
                     f"{settings.geocoding_base_url}/reverse",
@@ -81,7 +81,7 @@ class LocationService:
         if not (-90 <= lat <= 90 and -180 <= lon <= 180):
             raise LocationLookupError("Coordinates are out of range", code="INVALID_COORDINATES")
 
-        async with httpx.AsyncClient(timeout=1.0) as client:
+        async with httpx.AsyncClient(timeout=min(1.0, settings.upstream_timeout_seconds)) as client:
             return await self._reverse_with_osm(client, lat, lon)
 
     async def _reverse_with_osm(self, client: httpx.AsyncClient, lat: float, lon: float) -> LocationResult:

@@ -304,6 +304,20 @@ async function fetchCurrentWeather(location) {
   return payload
 }
 
+async function fetchWeatherOverview(location) {
+  const payload = await apiRequest(`/weather/overview?location=${encodeURIComponent(location)}&days=5`)
+  normalizeCurrentWeather(payload)
+  forecastDays.value = payload.forecast_days ?? []
+  return payload
+}
+
+async function fetchWeatherOverviewByCoordinates(latitude, longitude) {
+  const payload = await apiRequest(`/weather/overview-location?lat=${latitude}&lon=${longitude}&days=5`)
+  normalizeCurrentWeather(payload, { displayLabel: 'Current Location' })
+  forecastDays.value = payload.forecast_days ?? []
+  return payload
+}
+
 async function fetchForecast(location) {
   const payload = await apiRequest(`/weather/forecast?location=${encodeURIComponent(location)}&days=5`)
   forecastDays.value = payload.forecast_days
@@ -351,9 +365,17 @@ async function fetchHistory() {
   }))
 }
 
-async function saveCurrentSearchRecord(locationQuery) {
+async function saveCurrentSearchRecord(locationQuery, weatherPayload = null) {
   if (!isAuthenticated.value) return
-  await apiRequest('/weather/history', { method: 'POST', body: JSON.stringify({ location: locationQuery, status: 'Active' }) })
+  await apiRequest('/weather/history', { method: 'POST', body: JSON.stringify({ location: locationQuery, status: 'Active', weather_payload: weatherPayload }) })
+}
+
+async function persistSearchRecord(locationQuery, weatherPayload = null) {
+  if (!isAuthenticated.value) return
+  try {
+    await saveCurrentSearchRecord(locationQuery, weatherPayload)
+    await fetchHistory()
+  } catch {}
 }
 
 async function handleSearch(query, options = {}) {
@@ -379,17 +401,11 @@ async function handleSearch(query, options = {}) {
   locationSuggestions.value = []
 
   try {
-    await fetchCurrentWeather(locationQuery)
-    const forecastLoaded = await fetchForecastSafely(locationQuery)
+    const payload = await fetchWeatherOverview(locationQuery)
     statusText.value = messages.value.statuses.weatherLoaded(selectedLocation.value)
-    if (forecastLoaded) {
-      weatherError.value = ''
-    }
-    if (options.persist) {
-      await saveCurrentSearchRecord(locationQuery)
-      if (isAuthenticated.value) {
-        await fetchHistory()
-      }
+    weatherError.value = ''
+    if (options.persist && isAuthenticated.value) {
+      void persistSearchRecord(locationQuery, payload)
     }
   } catch (error) {
     searchError.value = error.message || 'Unable to fetch weather for that location.'
@@ -417,19 +433,14 @@ async function handleCurrentLocation() {
     activeLocationQuery.value = `${latitude}, ${longitude}`
     searchQuery.value = 'Current Location'
     selectedLocation.value = 'Current Location'
-    const payload = await apiRequest(`/weather/current-location?lat=${latitude}&lon=${longitude}`)
-    normalizeCurrentWeather(payload, { displayLabel: 'Current Location' })
+    const payload = await fetchWeatherOverviewByCoordinates(latitude, longitude)
     suppressSuggestions = true
     locationSuggestions.value = []
     await refreshCurrentLocationName(latitude, longitude)
-    const forecastLoaded = await fetchForecastSafely(activeLocationQuery.value)
     statusText.value = messages.value.statuses.currentLocationLoaded
-    if (forecastLoaded) {
-      weatherError.value = ''
-    }
+    weatherError.value = ''
     if (isAuthenticated.value) {
-      await saveCurrentSearchRecord(activeLocationQuery.value)
-      await fetchHistory()
+      void persistSearchRecord(activeLocationQuery.value, payload)
     }
   } catch (error) {
     searchError.value = error.message || 'Unable to determine your current location.'
@@ -496,8 +507,14 @@ async function handleRangeSubmit(payload) {
     const displayLabel = isCoordinateQuery ? selectedLocation.value : (result.location.display_label || result.location.name)
     applyResolvedLocation(result.location, { displayLabel })
     statusText.value = messages.value.statuses.customRangeLoaded(selectedLocation.value)
-    await apiRequest('/weather/history', { method: 'POST', body: JSON.stringify({ location: targetLocation, start_date: payload.startDate, end_date: payload.endDate, status: 'Saved' }) })
-    await fetchHistory()
+    if (isAuthenticated.value) {
+      void (async () => {
+        try {
+          await apiRequest('/weather/history', { method: 'POST', body: JSON.stringify({ location: targetLocation, start_date: payload.startDate, end_date: payload.endDate, status: 'Saved', weather_payload: result }) })
+          await fetchHistory()
+        } catch {}
+      })()
+    }
   } catch (error) {
     weatherError.value = error.message || messages.value.tips.dateRangeRule
   } finally {

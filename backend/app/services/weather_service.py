@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 from datetime import date, datetime, timedelta, timezone
 from statistics import mean
 
@@ -51,26 +52,27 @@ class WeatherService:
         location = await location_service.resolve(query)
         return await self.get_current_weather_by_coordinates(location.latitude, location.longitude, location)
 
+    async def get_weather_overview(self, query: str, days: int) -> WeatherResponse:
+        location = await location_service.resolve(query)
+        return await self.get_weather_overview_by_coordinates(location.latitude, location.longitude, days, location)
+
     async def get_current_weather_by_coordinates(self, lat: float, lon: float, resolved_location=None) -> WeatherResponse:
         location = resolved_location or location_service.coordinate_result(lat, lon)
         payload = await self._fetch_forecast(lat, lon, forecast_days=1)
-        current = payload.get("current") or {}
-        daily = payload.get("daily") or {}
-        daily_max = (daily.get("temperature_2m_max") or [None])[0]
-        daily_min = (daily.get("temperature_2m_min") or [None])[0]
         return WeatherResponse(
             location=location,
-            current=CurrentWeather(
-                temperature_c=float(current.get("temperature_2m", 0.0)),
-                feels_like_c=float(current["apparent_temperature"]) if current.get("apparent_temperature") is not None else None,
-                condition=self._condition(current.get("weather_code"))[0],
-                humidity=float(current["relative_humidity_2m"]) if current.get("relative_humidity_2m") is not None else None,
-                wind_speed=float(current["wind_speed_10m"]) if current.get("wind_speed_10m") is not None else None,
-                temp_max_c=float(daily_max) if daily_max is not None else None,
-                temp_min_c=float(daily_min) if daily_min is not None else None,
-                icon_code=self._condition(current.get("weather_code"))[1],
-            ),
+            current=self._build_current_weather(payload),
             forecast_days=[],
+        )
+
+    async def get_weather_overview_by_coordinates(self, lat: float, lon: float, days: int, resolved_location=None) -> WeatherResponse:
+        location = resolved_location or location_service.coordinate_result(lat, lon)
+        payload = await self._fetch_forecast(lat, lon, forecast_days=days)
+        daily = payload.get("daily") or {}
+        return WeatherResponse(
+            location=location,
+            current=self._build_current_weather(payload),
+            forecast_days=self._build_forecast_days(daily),
         )
 
     async def get_forecast(self, query: str, days: int) -> WeatherResponse:
@@ -94,10 +96,14 @@ class WeatherService:
         else:
             yesterday = today - timedelta(days=1)
             if start_date <= yesterday:
-                archive_payload = await self._fetch_archive(location.latitude, location.longitude, start_date.isoformat(), yesterday.isoformat())
+                archive_task = self._fetch_archive(location.latitude, location.longitude, start_date.isoformat(), yesterday.isoformat())
+                forecast_task = self._fetch_forecast_range(location.latitude, location.longitude, today, end_date)
+                archive_payload, forecast_daily = await asyncio.gather(archive_task, forecast_task)
                 merged_daily = self._merge_daily(merged_daily, archive_payload.get("daily") or {})
-            forecast_daily = await self._fetch_forecast_range(location.latitude, location.longitude, today, end_date)
-            merged_daily = self._merge_daily(merged_daily, forecast_daily)
+                merged_daily = self._merge_daily(merged_daily, forecast_daily)
+            else:
+                forecast_daily = await self._fetch_forecast_range(location.latitude, location.longitude, today, end_date)
+                merged_daily = self._merge_daily(merged_daily, forecast_daily)
 
         forecast_days = self._build_forecast_days(merged_daily)
         max_values = merged_daily.get("temperature_2m_max") or []
@@ -146,13 +152,29 @@ class WeatherService:
         return await self._request("https://archive-api.open-meteo.com/v1/archive", params)
 
     async def _request(self, url: str, params: dict) -> dict:
-        async with httpx.AsyncClient(timeout=20.0) as client:
+        async with httpx.AsyncClient(timeout=settings.upstream_timeout_seconds) as client:
             try:
                 response = await client.get(url, params=params)
                 response.raise_for_status()
             except httpx.HTTPError as exc:
                 raise WeatherServiceError("Weather provider request failed") from exc
         return response.json()
+
+    def _build_current_weather(self, payload: dict) -> CurrentWeather:
+        current = payload.get("current") or {}
+        daily = payload.get("daily") or {}
+        daily_max = (daily.get("temperature_2m_max") or [None])[0]
+        daily_min = (daily.get("temperature_2m_min") or [None])[0]
+        return CurrentWeather(
+            temperature_c=float(current.get("temperature_2m", 0.0)),
+            feels_like_c=float(current["apparent_temperature"]) if current.get("apparent_temperature") is not None else None,
+            condition=self._condition(current.get("weather_code"))[0],
+            humidity=float(current["relative_humidity_2m"]) if current.get("relative_humidity_2m") is not None else None,
+            wind_speed=float(current["wind_speed_10m"]) if current.get("wind_speed_10m") is not None else None,
+            temp_max_c=float(daily_max) if daily_max is not None else None,
+            temp_min_c=float(daily_min) if daily_min is not None else None,
+            icon_code=self._condition(current.get("weather_code"))[1],
+        )
 
     def _build_forecast_days(self, daily: dict) -> list[ForecastDay]:
         times = daily.get("time") or []

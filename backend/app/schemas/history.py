@@ -5,6 +5,7 @@ from uuid import UUID
 from pydantic import BaseModel, Field
 
 from app.database.models import SnapshotType
+from app.schemas.weather import WeatherResponse
 
 
 class HistoryCreate(BaseModel):
@@ -13,6 +14,7 @@ class HistoryCreate(BaseModel):
     end_date: date | None = None
     status: str = "Saved"
     notes: str | None = None
+    weather_payload: WeatherResponse | None = None
 
 
 class HistoryUpdate(BaseModel):
