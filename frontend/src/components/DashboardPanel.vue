@@ -17,10 +17,10 @@
         <thead><tr><th>{{ labels.location }}</th><th>{{ labels.dateRange }}</th><th>{{ labels.temp }}</th><th>{{ labels.actions }}</th></tr></thead>
         <tbody>
           <tr v-for="record in records" :key="record.id">
-            <td>{{ record.location }}</td>
-            <td>{{ record.dateLabel }}</td>
-            <td>{{ record.temperature }}</td>
-            <td class="action-cell"><button type="button" @click="$emit('update-record', record.id)">{{ labels.edit }}</button><button type="button" @click="$emit('delete-record', record.id)">{{ labels.delete }}</button></td>
+            <td :data-label="labels.location">{{ record.location }}</td>
+            <td :data-label="labels.dateRange">{{ record.dateLabel }}</td>
+            <td :data-label="labels.temp">{{ record.temperature }}</td>
+            <td :data-label="labels.actions" class="action-cell"><button type="button" @click="$emit('update-record', record.id)">{{ labels.edit }}</button><button type="button" @click="$emit('delete-record', record.id)">{{ labels.delete }}</button></td>
           </tr>
         </tbody>
       </table>
@@ -57,4 +57,18 @@ th { background: #f5f8f4; color: #4f6754; }
 .export-actions { display: flex; gap: 8px; flex-wrap: wrap; }
 @media (max-width: 960px) { .export-panel { flex-direction: column; align-items: stretch; } .dashboard-header { flex-wrap: wrap; align-items: center; } .export-actions button, .back-button { width: auto; } }
 @media (max-width: 720px) { .dashboard-summary { grid-template-columns: 1fr; } .dashboard-header { flex-direction: column; align-items: stretch; } .action-cell { flex-direction: column; } .export-actions button, .back-button { width: 100%; } }
+@media (max-width: 540px) {
+  .panel { padding: 18px; }
+  .table-shell { overflow: visible; border: 0; }
+  table, thead, tbody, tr, th, td { display: block; width: 100%; }
+  table { min-width: 0; }
+  thead { display: none; }
+  tbody { display: grid; gap: 12px; }
+  tr { border: 1px solid #cfd8cf; border-radius: 14px; background: #f7faf7; padding: 14px; }
+  td { border-bottom: 0; padding: 0; display: grid; gap: 4px; }
+  td + td { margin-top: 12px; }
+  td::before { content: attr(data-label); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.12em; color: #6f8174; }
+  .action-cell { margin-top: 2px; }
+  .action-cell button { width: 100%; }
+}
 </style>

@@ -56,7 +56,7 @@ h1 { font-size: 1.4rem; }
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 6px;
-    justify-content: stretch;
+    justify-content: center;
     padding: 6px;
     border-radius: 14px;
     background: #f5faf6;
@@ -64,7 +64,7 @@ h1 { font-size: 1.4rem; }
   }
   .header-right button {
     width: 100%;
-    max-width: min(100%, 14rem);
+    max-width: min(100%, 9rem);
     min-height: 38px;
     padding: 8px 10px;
     font-size: 0.92rem;

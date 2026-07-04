@@ -23,7 +23,6 @@
             <strong>{{ currentTemperature }}</strong>
             <p class="condition-text">{{ currentWeather.condition }}</p>
             <p v-if="selectedLocation" class="location-text">{{ selectedLocation }}</p>
-            <p v-if="currentWeather.region" class="region-text">{{ currentWeather.region }}</p>
           </div>
         </div>
       </article>
@@ -123,10 +122,7 @@
 
     <section v-else class="weather-list-shell">
       <div class="weather-list-header">
-        <div>
-          <p class="eyebrow">{{ labels.forecast }}</p>
-          <h3>{{ labels.title }}</h3>
-        </div>
+        <h3>{{ labels.forecast }}</h3>
       </div>
       <section v-if="showForecastTrend" class="trend-card forecast-trend-card">
         <div class="trend-header">
@@ -260,7 +256,7 @@ h2, h3, p { margin: 0; }
 .weather-icon { font-size: 3rem; line-height: 1; }
 .headline-block strong { font-size: clamp(2rem, 4vw, 3rem); line-height: 1; }
 .condition-text { color: #23402e; font-weight: 600; }
-.location-text, .region-text { color: #567061; }
+.location-text { color: #567061; }
 .details-card { align-content: start; }
 .details-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 .detail-pill { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 10px; border: 1px solid #dbe4dc; border-radius: 12px; background: #f7faf7; padding: 12px; }
