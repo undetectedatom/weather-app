@@ -16,6 +16,8 @@ const DEFAULT_LOCATION_QUERY = 'San Francisco'
 const MAX_RANGE_DAYS = 14
 const MAX_DISTANCE_FROM_TODAY_DAYS = 14
 const PROJECT_CREATOR_NAME = 'Junyang Song'
+const SUGGESTION_DEBOUNCE_MS = 90
+const SUGGESTION_CACHE_LIMIT = 24
 const STORAGE_KEYS = {
   language: 'weather-app.language',
   temperatureUnit: 'weather-app.temperature-unit',
@@ -138,7 +140,10 @@ const editRecordError = ref('')
 const locationSuggestions = ref([])
 const editingRecord = ref(null)
 let suggestionTimer = null
+let suggestionAbortController = null
 let suppressSuggestions = false
+let latestSuggestionRequestId = 0
+const suggestionCache = new Map()
 
 const currentWeather = reactive({
   location: DEFAULT_LOCATION_QUERY,
@@ -232,6 +237,20 @@ function readStorage(key, fallback) {
 
 function writeStorage(key, value) {
   try { window.localStorage.setItem(key, value) } catch {}
+}
+
+function cancelSuggestionRequest() {
+  if (!suggestionAbortController) return
+  suggestionAbortController.abort()
+  suggestionAbortController = null
+}
+
+function rememberSuggestionResults(query, results) {
+  if (suggestionCache.has(query)) suggestionCache.delete(query)
+  suggestionCache.set(query, results)
+  if (suggestionCache.size <= SUGGESTION_CACHE_LIMIT) return
+  const oldestQuery = suggestionCache.keys().next().value
+  if (oldestQuery) suggestionCache.delete(oldestQuery)
 }
 
 function loadSettings() {
@@ -343,6 +362,7 @@ async function handleSearch(query, options = {}) {
   suppressSuggestions = true
   searchQuery.value = displayQuery
   if (suggestionTimer) window.clearTimeout(suggestionTimer)
+  cancelSuggestionRequest()
   locationSuggestions.value = []
   if (!locationQuery) {
     searchError.value = 'Please enter a location before searching.'
@@ -646,8 +666,9 @@ async function loadAuthState() {
 }
 
 function chooseSuggestion(suggestion) {
+  const displayQuery = suggestion.display_label || suggestion.name
   locationSuggestions.value = []
-  handleSearch(suggestion.name, { persist: true, displayQuery: suggestion.display_label })
+  handleSearch(displayQuery, { persist: true, displayQuery })
 }
 
 function handleTyping() {
@@ -661,14 +682,32 @@ async function fetchSuggestions(query) {
   }
   const trimmed = query.trim()
   if (trimmed.length < 2) {
+    cancelSuggestionRequest()
     locationSuggestions.value = []
     return
   }
+  const requestId = ++latestSuggestionRequestId
+  cancelSuggestionRequest()
+  const cacheKey = trimmed.toLowerCase()
+  const cachedSuggestions = suggestionCache.get(cacheKey)
+  if (cachedSuggestions) {
+    locationSuggestions.value = cachedSuggestions
+    return
+  }
+  const controller = new AbortController()
+  suggestionAbortController = controller
   try {
-    const payload = await apiRequest(`/locations/search?query=${encodeURIComponent(trimmed)}`)
-    locationSuggestions.value = payload.results ?? []
-  } catch {
+    const payload = await apiRequest(`/locations/search?query=${encodeURIComponent(trimmed)}`, { signal: controller.signal })
+    if (requestId !== latestSuggestionRequestId) return
+    const results = payload.results ?? []
+    rememberSuggestionResults(cacheKey, results)
+    locationSuggestions.value = results
+  } catch (error) {
+    if (error?.name === 'AbortError') return
+    if (requestId !== latestSuggestionRequestId) return
     locationSuggestions.value = []
+  } finally {
+    if (requestId === latestSuggestionRequestId) suggestionAbortController = null
   }
 }
 
@@ -678,7 +717,7 @@ watch(searchQuery, (value) => {
     locationSuggestions.value = []
     return
   }
-  suggestionTimer = window.setTimeout(() => { fetchSuggestions(value) }, 250)
+  suggestionTimer = window.setTimeout(() => { fetchSuggestions(value) }, SUGGESTION_DEBOUNCE_MS)
 })
 
 watch(temperatureUnit, () => {
@@ -703,6 +742,7 @@ onMounted(async () => {
 onBeforeUnmount(() => {
   window.removeEventListener('keydown', handleGlobalKeydown)
   if (suggestionTimer) window.clearTimeout(suggestionTimer)
+  cancelSuggestionRequest()
 })
 </script>
 

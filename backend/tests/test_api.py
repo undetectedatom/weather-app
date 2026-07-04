@@ -118,6 +118,18 @@ def test_forecast_endpoint():
     assert len(response.json()['forecast_days']) == 5
 
 
+def test_location_ranking_prefers_country_context():
+    results = [
+        LocationResult(name='Georgetown', region='Demerara-Mahaica', country='Guyana', country_code='GY', latitude=6.8013, longitude=-58.1551, display_label='Georgetown, Demerara-Mahaica, Guyana'),
+        LocationResult(name='Georgetown', region='South Carolina', country='United States', country_code='US', latitude=33.3768, longitude=-79.2945, display_label='Georgetown, South Carolina, United States'),
+    ]
+
+    ranked = location_service._rank_results('Georgetown, South Carolina, United States', results)
+
+    assert ranked[0].country == 'United States'
+    assert ranked[0].region == 'South Carolina'
+
+
 def test_history_crud_and_export():
     cookies, _ = register_and_authenticate()
     create_response = client.post('/api/weather/history', json={'location': 'San Francisco', 'start_date': '2026-06-01', 'end_date': '2026-06-03'}, cookies=cookies)

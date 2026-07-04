@@ -186,15 +186,20 @@ class LocationService:
                 aliases.update({"uk", "u.k.", "britain", "great britain"})
             return aliases
 
-        def score(item: LocationResult) -> tuple[int, int, int, int]:
+        context_phrases = query_parts[1:]
+        context_tokens = tokenize(" ".join(context_phrases))
+
+        def score(item: LocationResult) -> tuple[int, int, int, int, int, int]:
             item_name = (item.name or "").lower()
             exact_name = 1 if query_parts[0] == item_name else 0
             prefix_name = 1 if item_name.startswith(query_parts[0]) else 0
-            general_tokens = tokenize(" ".join(filter(None, [item.name, item.region, item.country, item.display_label])))
-            general_matches = sum(1 for part in query_parts if part in general_tokens)
-            country_tokens = country_aliases(item)
-            country_matches = sum(1 for part in query_parts[1:] if part in country_tokens)
-            return (country_matches, exact_name, prefix_name, general_matches)
+            searchable_text = " ".join(filter(None, [item.name, item.region, item.country, item.display_label])).lower()
+            searchable_tokens = tokenize(searchable_text)
+            context_phrase_matches = sum(1 for phrase in context_phrases if phrase in searchable_text)
+            context_token_matches = sum(1 for token in context_tokens if token in searchable_tokens)
+            country_matches = sum(1 for token in context_tokens if token in country_aliases(item))
+            general_matches = sum(1 for token in tokenize(" ".join(query_parts)) if token in searchable_tokens)
+            return (country_matches, context_phrase_matches, context_token_matches, exact_name, prefix_name, general_matches)
 
         return sorted(results, key=score, reverse=True)
 
