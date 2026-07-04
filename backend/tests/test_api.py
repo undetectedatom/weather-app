@@ -43,14 +43,18 @@ async def fake_reverse(lat: float, lon: float):
     return LocationResult(name='Current Location', region='CA', country='USA', latitude=lat, longitude=lon, display_label='Current Location, CA, USA')
 
 
+async def fake_reverse_name(lat: float, lon: float):
+    return LocationResult(name='Fremont', region='California', country='USA', latitude=lat, longitude=lon, display_label='Fremont, California, USA')
+
+
 async def fake_current_weather(query: str):
     location = await fake_resolve(query)
-    return WeatherResponse(location=location, current=CurrentWeather(temperature_c=21.5, feels_like_c=21.0, condition='Clear sky', humidity=61, wind_speed=10, icon_code='clear'))
+    return WeatherResponse(location=location, current=CurrentWeather(temperature_c=21.5, feels_like_c=21.0, condition='Clear sky', humidity=61, wind_speed=10, temp_max_c=24, temp_min_c=16, icon_code='clear'))
 
 
 async def fake_current_by_coordinates(lat: float, lon: float, resolved_location=None):
     location = resolved_location or await fake_reverse(lat, lon)
-    return WeatherResponse(location=location, current=CurrentWeather(temperature_c=19.0, feels_like_c=18.5, condition='Partly cloudy', humidity=55, wind_speed=8, icon_code='partly-cloudy'))
+    return WeatherResponse(location=location, current=CurrentWeather(temperature_c=19.0, feels_like_c=18.5, condition='Partly cloudy', humidity=55, wind_speed=8, temp_max_c=22, temp_min_c=14, icon_code='partly-cloudy'))
 
 
 async def fake_forecast(query: str, days: int):
@@ -68,6 +72,7 @@ async def fake_range(query: str, start_date: str, end_date: str):
 location_service.search = fake_search
 location_service.resolve = fake_resolve
 location_service.reverse = fake_reverse
+location_service.reverse_name = fake_reverse_name
 weather_service.get_current_weather = fake_current_weather
 weather_service.get_current_weather_by_coordinates = fake_current_by_coordinates
 weather_service.get_forecast = fake_forecast
@@ -98,6 +103,13 @@ def test_current_weather_by_coordinates():
     response = client.get('/api/weather/current-location', params={'lat': 37.77, 'lon': -122.41})
     assert response.status_code == 200
     assert response.json()['location']['latitude'] == 37.77
+    assert response.json()['current']['temp_max_c'] == 22
+
+
+def test_reverse_location_name():
+    response = client.get('/api/locations/reverse', params={'lat': 37.55, 'lon': -121.98})
+    assert response.status_code == 200
+    assert response.json()['display_label'] == 'Fremont, California, USA'
 
 
 def test_forecast_endpoint():

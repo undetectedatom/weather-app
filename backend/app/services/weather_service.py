@@ -23,8 +23,17 @@ WEATHER_CODES = {
     63: ("Moderate rain", "rain"),
     65: ("Heavy rain", "rain"),
     71: ("Slight snow", "snow"),
+    73: ("Moderate snow", "snow"),
+    75: ("Heavy snow", "snow"),
+    77: ("Snow grains", "snow"),
     80: ("Rain showers", "showers"),
+    81: ("Moderate showers", "showers"),
+    82: ("Violent showers", "showers"),
+    85: ("Light snow showers", "snow"),
+    86: ("Heavy snow showers", "snow"),
     95: ("Thunderstorm", "storm"),
+    96: ("Thunderstorm with light hail", "storm"),
+    99: ("Thunderstorm with heavy hail", "storm"),
 }
 MAX_RANGE_DAYS = 14
 MAX_DISTANCE_FROM_TODAY_DAYS = 14
@@ -43,9 +52,12 @@ class WeatherService:
         return await self.get_current_weather_by_coordinates(location.latitude, location.longitude, location)
 
     async def get_current_weather_by_coordinates(self, lat: float, lon: float, resolved_location=None) -> WeatherResponse:
-        location = resolved_location or await location_service.reverse(lat, lon)
+        location = resolved_location or location_service.coordinate_result(lat, lon)
         payload = await self._fetch_forecast(lat, lon, forecast_days=1)
         current = payload.get("current") or {}
+        daily = payload.get("daily") or {}
+        daily_max = (daily.get("temperature_2m_max") or [None])[0]
+        daily_min = (daily.get("temperature_2m_min") or [None])[0]
         return WeatherResponse(
             location=location,
             current=CurrentWeather(
@@ -54,6 +66,8 @@ class WeatherService:
                 condition=self._condition(current.get("weather_code"))[0],
                 humidity=float(current["relative_humidity_2m"]) if current.get("relative_humidity_2m") is not None else None,
                 wind_speed=float(current["wind_speed_10m"]) if current.get("wind_speed_10m") is not None else None,
+                temp_max_c=float(daily_max) if daily_max is not None else None,
+                temp_min_c=float(daily_min) if daily_min is not None else None,
                 icon_code=self._condition(current.get("weather_code"))[1],
             ),
             forecast_days=[],
@@ -186,7 +200,7 @@ class WeatherService:
         return {"time": [], "weather_code": [], "temperature_2m_max": [], "temperature_2m_min": []}
 
     def _condition(self, code: int | None) -> tuple[str, str]:
-        return WEATHER_CODES.get(code, ("Unknown", "unknown"))
+        return WEATHER_CODES.get(code, ("Unspecified conditions", "cloudy"))
 
     def _validate_range(self, start_date_raw: str, end_date_raw: str) -> tuple[date, date]:
         try:

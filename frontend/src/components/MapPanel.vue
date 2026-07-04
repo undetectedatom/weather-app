@@ -4,16 +4,11 @@
       <p class="eyebrow">{{ labels.eyebrow }}</p>
       <h2>{{ labels.title }}</h2>
       <p class="location-heading">{{ locationLabel }}</p>
+      <p v-if="regionLabel" class="region-heading">{{ regionLabel }}</p>
     </div>
 
     <div class="map">
       <iframe v-if="latitude != null && longitude != null" class="map-frame" :src="embedUrl" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
-      <div class="map-overlay">
-        <p class="overlay-title">{{ locationLabel }}</p>
-        <span v-if="regionLabel">{{ regionLabel }}</span>
-        <strong v-if="latitude != null && longitude != null">{{ latitude.toFixed(3) }}, {{ longitude.toFixed(3) }}</strong>
-        <a v-if="latitude != null && longitude != null" class="map-link" :href="mapLink" target="_blank" rel="noreferrer">{{ labels.openStreetMap }}</a>
-      </div>
     </div>
   </aside>
 </template>
@@ -38,7 +33,6 @@ const embedUrl = computed(() => {
   const bottom = props.latitude - delta
   return `https://www.openstreetmap.org/export/embed.html?bbox=${left}%2C${bottom}%2C${right}%2C${top}&layer=mapnik&marker=${props.latitude}%2C${props.longitude}`
 })
-const mapLink = computed(() => props.latitude == null || props.longitude == null ? '#' : `https://www.openstreetmap.org/?mlat=${props.latitude}&mlon=${props.longitude}#map=11/${props.latitude}/${props.longitude}`)
 </script>
 
 <style scoped>
@@ -48,9 +42,7 @@ const mapLink = computed(() => props.latitude == null || props.longitude == null
 .eyebrow { margin: 0 0 4px; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.16em; color: #6f8174; }
 h2, p { margin: 0; }
 .location-heading { color: #23402e; font-size: 1rem; font-weight: 600; }
+.region-heading { color: #567061; }
 .map { min-height: 240px; border-radius: 14px; background: #f3f7f3; border: 1px solid #cfd8cf; position: relative; overflow: hidden; }
 .map-frame { width: 100%; height: 100%; min-height: 240px; border: 0; }
-.map-overlay { position: absolute; inset: auto 16px 16px 16px; padding: 14px; border-radius: 12px; background: rgba(255,255,255,0.94); border: 1px solid #cfd8cf; color: #23402e; display: grid; gap: 4px; }
-.overlay-title { font-weight: 700; }
-.map-link { color: #2f7d4b; text-decoration: none; font-weight: 600; }
 </style>

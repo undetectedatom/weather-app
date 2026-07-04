@@ -21,6 +21,7 @@ class Settings(BaseSettings):
     cookie_samesite: str = Field(default="lax", alias="AUTH_COOKIE_SAMESITE")
     weather_base_url: str = Field(default="https://api.open-meteo.com/v1", alias="OPEN_METEO_BASE_URL")
     geocoding_base_url: str = Field(default="https://geocoding-api.open-meteo.com/v1", alias="OPEN_METEO_GEOCODING_BASE_URL")
+    osm_geocoding_base_url: str = Field(default="https://nominatim.openstreetmap.org", alias="OSM_GEOCODING_BASE_URL")
     forecast_days: int = Field(default=5, alias="FORECAST_DAYS_DEFAULT")
     recent_locations_limit: int = Field(default=5, alias="RECENT_LOCATIONS_LIMIT")
 

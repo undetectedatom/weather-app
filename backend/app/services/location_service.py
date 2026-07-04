@@ -43,6 +43,15 @@ class LocationService:
     async def resolve(self, query: str) -> LocationResult:
         return (await self.search(query))[0]
 
+    def coordinate_result(self, lat: float, lon: float, *, name: str = "Current Location") -> LocationResult:
+        return LocationResult(
+            name=name,
+            region=None,
+            latitude=lat,
+            longitude=lon,
+            display_label=name,
+        )
+
     async def reverse(self, lat: float, lon: float) -> LocationResult:
         if not (-90 <= lat <= 90 and -180 <= lon <= 180):
             raise LocationLookupError("Coordinates are out of range", code="INVALID_COORDINATES")
@@ -56,7 +65,7 @@ class LocationService:
                 response.raise_for_status()
             except httpx.HTTPStatusError as exc:
                 if exc.response.status_code == 404:
-                    return self._coordinate_result(lat, lon)
+                    return await self._reverse_with_osm(client, lat, lon)
                 raise LocationLookupError("Location lookup failed", code="INVALID_LOCATION", status_code=502) from exc
             except httpx.HTTPError as exc:
                 raise LocationLookupError("Location lookup failed", code="INVALID_LOCATION", status_code=502) from exc
@@ -66,11 +75,51 @@ class LocationService:
         if results:
             return self._normalize_result(results[0])
 
-        return self._coordinate_result(lat, lon)
+        return await self._reverse_with_osm(client, lat, lon)
 
-    def _coordinate_result(self, lat: float, lon: float) -> LocationResult:
-        label = f"{lat}, {lon}"
-        return LocationResult(name=label, latitude=lat, longitude=lon, display_label=label)
+    async def reverse_name(self, lat: float, lon: float) -> LocationResult:
+        if not (-90 <= lat <= 90 and -180 <= lon <= 180):
+            raise LocationLookupError("Coordinates are out of range", code="INVALID_COORDINATES")
+
+        async with httpx.AsyncClient(timeout=1.0) as client:
+            return await self._reverse_with_osm(client, lat, lon)
+
+    async def _reverse_with_osm(self, client: httpx.AsyncClient, lat: float, lon: float) -> LocationResult:
+        try:
+            response = await client.get(
+                f"{settings.osm_geocoding_base_url}/reverse",
+                params={"lat": lat, "lon": lon, "format": "jsonv2", "accept-language": "en", "zoom": 12, "addressdetails": 1},
+                headers={"User-Agent": "weather-app/1.0"},
+            )
+            response.raise_for_status()
+        except httpx.HTTPError:
+            return self.coordinate_result(lat, lon)
+
+        payload = response.json()
+        address = payload.get("address") or {}
+        name = (
+            address.get("city")
+            or address.get("town")
+            or address.get("village")
+            or address.get("municipality")
+            or address.get("county")
+            or payload.get("name")
+            or "Current Location"
+        )
+        region = address.get("state") or address.get("region") or address.get("county")
+        country = address.get("country")
+        country_code = address.get("country_code")
+        label = ", ".join(part for part in [name, region, country] if part)
+        return LocationResult(
+            name=name,
+            region=region,
+            country=country,
+            country_code=country_code.upper() if isinstance(country_code, str) else None,
+            latitude=lat,
+            longitude=lon,
+            display_label=label or "Current Location",
+            source="openstreetmap",
+        )
 
     def _normalize_result(self, item: dict) -> LocationResult:
         region = item.get("admin1") or item.get("admin2")

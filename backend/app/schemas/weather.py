@@ -9,6 +9,8 @@ class CurrentWeather(BaseModel):
     condition: str
     humidity: float | None = None
     wind_speed: float | None = None
+    temp_max_c: float | None = None
+    temp_min_c: float | None = None
     icon_code: str
 
 
