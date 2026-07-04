@@ -32,10 +32,11 @@ This submission covers both assessment tracks:
 
 - Node.js `22.18.0+`
 - Python `3.11+` is recommended
+- Dependency manifests are already included where each tool expects them: `backend/requirements.txt` for Python packages and `frontend/package.json` plus `frontend/package-lock.json` for JavaScript packages. A separate root dependency file is not added because it would duplicate those files and make setup less efficient.
 
 ## Run locally
 
-### Quick start from a fresh clone
+### Automatic bash setup
 
 Run these in two terminals from the repo root:
 
@@ -48,7 +49,11 @@ The backend script creates `backend/.venv`, copies `backend/.env.example` to `ba
 
 The frontend script installs `frontend/node_modules` when needed and starts Vite.
 
-### 1. Backend
+### Manual setup
+
+Use these commands if the setup should be run step by step instead of through the helper scripts.
+
+#### 1. Backend
 
 ```bash
 cd backend
@@ -61,7 +66,7 @@ uvicorn app.main:app --reload
 
 The backend starts at `http://localhost:8000`.
 
-### 2. Frontend
+#### 2. Frontend
 
 In a second terminal:
 
@@ -97,7 +102,6 @@ If the backend runs on a different host or port, set `VITE_API_BASE_URL` before 
 ## Notes for the assessment
 
 - The app includes in-product PM Accelerator attribution plus author information in the UI.
-- The demo script deliverable lives in `docs/demo-video-script.md`.
 - The backend persists data in `backend/weather_app.db` by default.
 
 ## Verification
