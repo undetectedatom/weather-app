@@ -1,16 +1,12 @@
 <template>
   <div class="trend-shell">
-    <div class="trend-stats" aria-hidden="true">
-      <span>{{ minLabel }}</span>
-      <span>{{ maxLabel }}</span>
-    </div>
     <canvas ref="canvasRef" aria-hidden="true"></canvas>
   </div>
 </template>
 
 <script setup>
 import { Chart, Filler, LineController, LineElement, PointElement, CategoryScale, LinearScale, Tooltip } from 'chart.js'
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 
 Chart.register(LineController, LineElement, PointElement, CategoryScale, LinearScale, Tooltip, Filler)
 
@@ -24,16 +20,6 @@ const props = defineProps({
 
 const canvasRef = ref(null)
 let chart = null
-
-const validValues = computed(() => props.values.filter((value) => value != null && !Number.isNaN(value)))
-const minLabel = computed(() => {
-  if (!validValues.value.length) return '--'
-  return `${Math.round(Math.min(...validValues.value))}°`
-})
-const maxLabel = computed(() => {
-  if (!validValues.value.length) return '--'
-  return `${Math.round(Math.max(...validValues.value))}°`
-})
 
 function buildGradient(context, chartArea) {
   const gradient = context.createLinearGradient(0, chartArea.top, 0, chartArea.bottom)
@@ -152,16 +138,6 @@ onBeforeUnmount(() => {
 .trend-shell {
   position: relative;
   height: 12rem;
-  display: grid;
-  gap: 0.5rem;
-}
-
-.trend-stats {
-  display: flex;
-  justify-content: space-between;
-  color: #567061;
-  font-size: 0.8rem;
-  letter-spacing: 0.04em;
 }
 
 canvas {

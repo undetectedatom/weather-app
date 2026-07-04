@@ -186,6 +186,8 @@ function buildForecastPresentation(items) {
     dateLabel: formatDateLabel(item.date),
     icon: weatherIcon(item.icon_code),
     temp: formatRangeTemperature(item.temp_min_c, item.temp_max_c, temperatureUnit.value),
+    highTempLabel: formatTemperature(item.temp_max_c, temperatureUnit.value),
+    lowTempLabel: formatTemperature(item.temp_min_c, temperatureUnit.value),
     dayInfo: `${item.condition}${item.temp_max_c != null ? ` with highs near ${formatTemperature(item.temp_max_c, temperatureUnit.value)}` : ''}`,
     nightInfo: item.temp_min_c != null ? `Lows around ${formatTemperature(item.temp_min_c, temperatureUnit.value)}.` : 'Night details unavailable.',
     averageTempValue: item.temp_min_c != null && item.temp_max_c != null ? (item.temp_min_c + item.temp_max_c) / 2 : null,

@@ -44,8 +44,8 @@
         <h2>{{ labels.customTitle }}</h2>
       </div>
       <form class="range-form" @submit.prevent="submitRange">
-        <label><span>{{ labels.startDate }}</span><input v-model="startDate" type="date" :disabled="rangeLoading" /></label>
-        <label><span>{{ labels.endDate }}</span><input v-model="endDate" type="date" :disabled="rangeLoading" /></label>
+        <label><span>{{ labels.startDate }}</span><input v-model="startDate" class="date-input" type="date" :disabled="rangeLoading" @focus="ensureDateInputVisible" /></label>
+        <label><span>{{ labels.endDate }}</span><input v-model="endDate" class="date-input" type="date" :disabled="rangeLoading" @focus="ensureDateInputVisible" /></label>
         <button type="submit" :disabled="rangeLoading">{{ rangeLoading ? labels.checkingRange : labels.checkRange }}</button>
       </form>
       <section v-if="rangeDays.length" class="weather-list-shell">
@@ -72,10 +72,6 @@
             fill-top="rgba(47, 125, 75, 0.26)"
             fill-bottom="rgba(47, 125, 75, 0.02)"
           />
-          <div class="trend-labels">
-            <span>{{ rangeDays[0]?.dateLabel }}</span>
-            <span>{{ rangeDays[rangeDays.length - 1]?.dateLabel }}</span>
-          </div>
         </section>
         <section class="forecast-list">
           <article v-for="item in rangeDays" :key="item.date" class="forecast-card">
@@ -83,8 +79,8 @@
               <summary>
                 <div class="forecast-summary">
                   <div class="forecast-day">
+                    <div class="forecast-day-copy"><strong>{{ item.day }}</strong><p>{{ item.dateLabel }}</p></div>
                     <span class="forecast-icon">{{ item.icon }}</span>
-                    <div><strong>{{ item.day }}</strong><p>{{ item.dateLabel }}</p></div>
                   </div>
                   <div class="forecast-meta">
                     <span class="forecast-condition">{{ item.condition }}</span>
@@ -94,8 +90,30 @@
                 </div>
               </summary>
               <div class="forecast-detail-grid">
-                <div><p class="detail-label">{{ labels.day }}</p><p>{{ item.dayInfo }}</p></div>
-                <div><p class="detail-label">{{ labels.night }}</p><p>{{ item.nightInfo }}</p></div>
+                <div class="forecast-detail-card">
+                  <p class="detail-label">☀️ {{ labels.day }}</p>
+                  <p>{{ item.dayInfo }}</p>
+                </div>
+                <div class="forecast-detail-card">
+                  <p class="detail-label">🌙 {{ labels.night }}</p>
+                  <p>{{ item.nightInfo }}</p>
+                </div>
+                <div class="forecast-detail-card">
+                  <p class="detail-label">📈 {{ labels.highLow }}</p>
+                  <p>{{ item.highTempLabel }}</p>
+                </div>
+                <div class="forecast-detail-card">
+                  <p class="detail-label">📉 Low</p>
+                  <p>{{ item.lowTempLabel }}</p>
+                </div>
+                <div class="forecast-detail-card">
+                  <p class="detail-label">🧭 {{ labels.average }}</p>
+                  <p>{{ item.averageTempLabel }}</p>
+                </div>
+                <div class="forecast-detail-card">
+                  <p class="detail-label">🌤️ Condition</p>
+                  <p>{{ item.condition }}</p>
+                </div>
               </div>
             </details>
           </article>
@@ -122,10 +140,6 @@
           fill-top="rgba(210, 123, 44, 0.24)"
           fill-bottom="rgba(210, 123, 44, 0.02)"
         />
-        <div class="trend-labels">
-          <span>{{ forecastDays[0]?.dateLabel }}</span>
-          <span>{{ forecastDays[forecastDays.length - 1]?.dateLabel }}</span>
-        </div>
       </section>
       <section class="forecast-list">
         <article v-for="item in forecastDays" :key="item.date" class="forecast-card">
@@ -133,8 +147,8 @@
             <summary>
               <div class="forecast-summary">
                 <div class="forecast-day">
+                  <div class="forecast-day-copy"><strong>{{ item.day }}</strong><p>{{ item.dateLabel }}</p></div>
                   <span class="forecast-icon">{{ item.icon }}</span>
-                  <div><strong>{{ item.day }}</strong><p>{{ item.dateLabel }}</p></div>
                 </div>
                 <div class="forecast-meta">
                   <span class="forecast-condition">{{ item.condition }}</span>
@@ -144,8 +158,30 @@
               </div>
             </summary>
             <div class="forecast-detail-grid">
-              <div><p class="detail-label">{{ labels.day }}</p><p>{{ item.dayInfo }}</p></div>
-              <div><p class="detail-label">{{ labels.night }}</p><p>{{ item.nightInfo }}</p></div>
+              <div class="forecast-detail-card">
+                <p class="detail-label">☀️ {{ labels.day }}</p>
+                <p>{{ item.dayInfo }}</p>
+              </div>
+              <div class="forecast-detail-card">
+                <p class="detail-label">🌙 {{ labels.night }}</p>
+                <p>{{ item.nightInfo }}</p>
+              </div>
+              <div class="forecast-detail-card">
+                <p class="detail-label">📈 {{ labels.highLow }}</p>
+                <p>{{ item.highTempLabel }}</p>
+              </div>
+              <div class="forecast-detail-card">
+                <p class="detail-label">📉 Low</p>
+                <p>{{ item.lowTempLabel }}</p>
+              </div>
+              <div class="forecast-detail-card">
+                <p class="detail-label">🧭 {{ labels.average }}</p>
+                <p>{{ item.averageTempLabel }}</p>
+              </div>
+              <div class="forecast-detail-card">
+                <p class="detail-label">🌤️ Condition</p>
+                <p>{{ item.condition }}</p>
+              </div>
             </div>
           </details>
         </article>
@@ -190,6 +226,11 @@ const forecastChartValues = computed(() => sanitizeTrendValues(props.forecastDay
 
 function sanitizeTrendValues(items) {
   return items.map((item) => item.averageTempValue ?? null)
+}
+
+function ensureDateInputVisible(event) {
+  if (window.innerWidth > 640) return
+  event.target.scrollIntoView({ block: 'center', behavior: 'smooth' })
 }
 
 function submitRange() {
@@ -237,20 +278,26 @@ h2, h3, p { margin: 0; }
 .range-trend-card { background: linear-gradient(180deg, #f5faf6 0%, #ffffff 100%); }
 .forecast-trend-card { background: linear-gradient(180deg, #fff7ef 0%, #ffffff 100%); }
 .trend-header { display: flex; justify-content: space-between; gap: 12px; color: #4f6754; }
-.trend-labels { display: flex; justify-content: space-between; color: #567061; font-size: 0.92rem; }
 .forecast-list { display: grid; gap: 12px; }
 .forecast-card details { display: grid; gap: 14px; }
-.forecast-card summary { list-style: none; cursor: pointer; }
+.forecast-card { overflow: hidden; transition: border-color 160ms ease, box-shadow 160ms ease, background-color 160ms ease, transform 160ms ease; }
+.forecast-card summary { list-style: none; cursor: pointer; padding: 4px; margin: -4px; border-radius: 12px; transition: background-color 160ms ease; }
 .forecast-card summary::-webkit-details-marker { display: none; }
+.forecast-card summary:hover { background: #f7faf7; }
+.forecast-card summary:active { background: #eef6ef; }
+.forecast-card:has(details[open]) { background: linear-gradient(180deg, #f8fbf8 0%, #ffffff 100%); border-color: #b8cdbd; box-shadow: 0 12px 28px rgba(35, 64, 46, 0.08); }
+.forecast-card details[open] summary { background: #eef6ef; }
 .forecast-summary { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
-.forecast-day { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 12px; }
+.forecast-day { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 12px; }
+.forecast-day-copy { display: grid; gap: 2px; }
 .forecast-icon { font-size: 1.8rem; line-height: 1; align-self: center; }
 .forecast-meta { display: grid; gap: 4px; justify-items: end; text-align: right; }
 .forecast-condition { color: #4f6754; }
 .forecast-temp { font-weight: 700; }
 .forecast-average { color: #567061; font-size: 0.92rem; }
 .forecast-card p, .detail-label { color: #567061; }
-.forecast-detail-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.forecast-detail-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.forecast-detail-card { border: 1px solid #dbe4dc; border-radius: 12px; background: #fcfefd; padding: 12px; display: grid; gap: 6px; }
 @media (max-width: 960px) {
   .summary-grid, .range-form, .forecast-detail-grid, .section-heading-row { grid-template-columns: 1fr; }
   .details-grid { grid-template-columns: 1fr; }
