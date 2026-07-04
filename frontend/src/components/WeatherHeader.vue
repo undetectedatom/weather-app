@@ -80,6 +80,8 @@ h1 { font-size: 1.4rem; }
 @media (max-width: 360px) {
   .header-right {
     grid-template-columns: 1fr;
+    justify-items: center;
   }
+  .header-right button { justify-self: center; }
 }
 </style>
